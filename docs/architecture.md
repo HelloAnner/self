@@ -776,6 +776,8 @@ some-command | self source add - --kind jsonl
 
 默认情况下，`source add` 会完成“注册 → 内部归档 → 解析 → 切片 → 入库 → 索引 → 向量化 → 图谱与 Claim 抽取”。命令的 Composite Operation 只有在 Source Snapshot 已归档且 Ingestion 达到 `ready` 后才算完整成功，而不是只记录了路径；Source 与 Ingestion 各自保留独立状态。
 
+实现阶段说明：Phase 3 已启用默认 Source→Ingestion→Document/Revision/Chunk 语义；`--no-build` 是明确停在 `archive_status=published`、`ingestion_status=not_started` 的归档入口。FTS、向量、Graph 和 Claim 仍按 Phase 4～5 接续，不提前报告完成。
+
 #### 查看、同步和修改数据源
 
 ```bash
@@ -827,17 +829,17 @@ self remember '一条知识'                  # 等价于 source add --kind text
 
 ```bash
 # 建立持续连接
-self connection add ~/project/docs --preset docs --interval 5m
+self connection add ~/project/docs --kind directory --preset docs --interval 5m
 self connection add ~/project/README.md --kind file
 
 # 查看连接和实时变化
-self connection list --health degraded
+self connection list --state degraded
 self connection status connection:con_123
-self connection events connection:con_123 --since 1h
+self connection events connection:con_123
 self connection watch --all --jsonl
 
 # 扫描、暂停、恢复和移动路径重绑
-self connection scan connection:con_123 --full
+self connection scan connection:con_123 --full-hash
 self connection pause connection:con_123
 self connection resume connection:con_123
 self connection rebind connection:con_123 ~/moved/project/docs --plan
@@ -845,7 +847,7 @@ self connection rebind connection:con_123 ~/moved/project/docs --plan
 # 后台进程
 self daemon start
 self daemon status
-self daemon logs --follow
+self daemon logs
 self daemon stop
 ```
 

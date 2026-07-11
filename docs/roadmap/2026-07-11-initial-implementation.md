@@ -62,11 +62,11 @@ pending → in_progress → completed
 
 | Workstream | 当前状态 | Exit Gate | 验收证据目录 |
 | --- | --- | --- | --- |
-| W0 / Phase 0 | pending | 编译、类型、SQLite/FTS/vec Spike 通过 | `phase-0/` |
-| W1 / Phase 1 | pending | `init/status/config/doctor/version` 真实 CLI 通过 | `phase-1/` |
-| W2 / Phase 2 | pending | Source → Blob → Snapshot 证据闭环 | `phase-2/` |
-| W2.5 / Phase 2.5 | pending | 文件变化自动归档且 Daemon 可恢复 | `phase-2-5/` |
-| W3 / Phase 3 | pending | Snapshot → Revision → Chunk 可增量重建 | `phase-3/` |
+| W0 / Phase 0 | completed | 编译、类型、SQLite/FTS/vec Spike、MIT License 与本机 npm Package Spike 通过 | `phase-0/` |
+| W1 / Phase 1 | completed | `init/status/config/doctor/version` 真实 CLI 通过 | `phase-1/` |
+| W2 / Phase 2 | completed | Source → Blob → Snapshot 证据闭环 | `phase-2/` |
+| W2.5 / Phase 2.5 | completed | 文件变化自动归档且 Daemon 可恢复 | `phase-2-5/` |
+| W3 / Phase 3 | completed | Snapshot → Revision → Chunk 可增量重建 | `phase-3/` |
 | W4 / Phase 4 | pending | FTS/Vector/Hybrid Search Alpha 通过 | `phase-4/` |
 | W5 / Phase 5 | pending | Graph/Claim 证据和重建等价通过 | `phase-5/` |
 | W6 / Phase 6 | pending | Ask 每个事实可 Trace | `phase-6/` |
@@ -75,6 +75,23 @@ pending → in_progress → completed
 | W9 / Phase 9 | pending | Plan/Apply/Delete/Restore/Undo 安全通过 | `phase-9/` |
 | W10 / Phase 10 | pending | Backup/Restore/Crash/Release Gate 通过 | `phase-10/` |
 | W11 / Phase 11 | pending | CLI/MCP/HTTP 契约一致 | `phase-11/` |
+
+## 可恢复执行检查点
+
+> 最后更新：2026-07-11，Phase 3 最终 Gate 与证据归档完成后。
+>
+> **恢复指针：不要重复 Phase 0～3；收到下一次“继续”后，从 Phase 4 的 Read 开始，先完整阅读 Model Selection、Model、Knowledge、Retrieval、Performance 与 Testing，再设计 Schema 5。未经用户确认不进入 Phase 4。**
+
+| 阶段 | 状态与已经交付的稳定边界 | 验证/恢复依据 | 后续不得误判为已完成的内容 |
+| --- | --- | --- | --- |
+| Phase 0 | `completed`：Bun/TypeScript/SQLite 基线、FTS5/sqlite-vec Spike、MIT、构建与本机分发骨架 | `.test-runs/roadmap/2026-07-11/phase-0/` | 跨平台 Release Suite 属于 Phase 10 |
+| Phase 1 | `completed`：单目录 Root、Schema 1、Init/Resume/Rollback、配置、Doctor、迁移 Plan/Apply 骨架和稳定 CLI envelope | `.test-runs/roadmap/2026-07-11/phase-1/` | 通用 Job/Backup/GC 属于 Phase 10 |
+| Phase 2 | `completed`：Schema 2、Source/Blob/Snapshot、Diff、证据去重、ChangeBatch Receipt、真实文件/目录/Obsidian/stdin/web 归档 | `.test-runs/roadmap/2026-07-11/phase-2/` | Parser/Revision/Chunk 属于 Phase 3 |
+| Phase 2.5 | `completed`：Schema 3、Connection reconciliation、ChangeBatch 自动归档、watcher 提示、Daemon Lease、崩溃恢复和 Rebind | `.test-runs/roadmap/2026-07-11/phase-2-5/` | ChangeItem 已由 Phase 3 继续推进到 `ingested` |
+| Phase 3 | `completed`：Schema 4、五类 Parser、NormalizedDocument、Document/Revision/Chunk、lineage、崩溃恢复、Note 版本和增量/全量等价 | `.test-runs/roadmap/2026-07-11/phase-3/`；合成运行根位于忽略提交的 `data/test-runs/phase-3-real-cli/` | FTS、Embedding 和 VectorSpace 属于 Phase 4 |
+| Phase 4 | `pending`：尚未创建 Schema 5 或生产实现 | 开始前核对 Phase 3 `verify.json`、Schema 4 与当前算法版本 | 下一执行阶段 |
+
+每次阶段 Gate 后必须同步本表、上方执行看板、对应阶段的“实现证据”小节和证据目录。若工作中断，以“恢复指针”和首个 `pending` 阶段为准，不根据未提交代码猜测进度。
 
 ## 每个阶段必须留下的证据
 
@@ -263,6 +280,14 @@ Self 的第一条完整价值链是：
 - Daemon 崩溃后可以恢复未完成 Scan 和 Batch。
 - Connection 读取外部路径，但全部归档、日志、锁和状态只写入 Self Root。
 
+### 2026-07-11 实现证据
+
+- Schema 3 已落地 Connection、Target、Observation、ScanRun、ChangeBatch/Item、EventHint、Failure、WriteReceipt 和 DaemonLease。
+- 编译后的真实 CLI 已验证手工扫描、metadata/Hash 复用、created/modified/deleted/renamed/restored、删除宽限、原生 watcher、丢事件后的定时对账、目标暂时消失保护、Source 批次归档、Rebind Plan/Apply 和 `source add --watch`。
+- Daemon 已验证单 Leader、文件锁、SQLite Lease/心跳、SIGKILL 后过期接管，以及 Batch 持久化后进程崩溃的幂等恢复。
+- Phase 2.5 的“增量摄入”在当前依赖顺序中表示可靠交付到 Source Snapshot；Revision/Chunk 发布必须等 Phase 3 的 Ingestion/Knowledge 表和状态机落地，当前不伪造下游完成状态。
+- 证据保存在 `.test-runs/roadmap/2026-07-11/phase-2-5/`；真实合成数据只保存在忽略提交的 `data/test-runs/phase-2-5-real-cli/`。
+
 详细设计见 [`domains/connection/`](../domains/connection/)。
 
 ## 7. Phase 3：Ingestion 与 Knowledge 核心
@@ -294,6 +319,18 @@ Self 的第一条完整价值链是：
 - 单文件少量修改只替换受影响 Chunk。
 - 解析失败不会留下看似成功的半成品。
 - 重启进程后能够继续或安全重试未完成的摄入任务。
+
+### 2026-07-11 实现证据
+
+- Schema 4 已落地 IngestionRun/entry checkpoint、Document、不可变 Revision、稳定 Chunk、Revision/Run 映射、Chunk lineage 和 managed Note。
+- Markdown、纯文本、HTML、JSONL 和 PDF 使用真实 Parser；HTML 不执行来源脚本，PDF 仅做本地文本/页码提取，图片等未支持附件明确 skipped。
+- 默认 `source add/sync` 已接通 Ingestion ready，`--no-build` 保留归档入口；Connection ChangeItem 在 Source 与 Knowledge 成功后推进到 `ingested` 并保存 Run/Revision 投影。
+- 编译后真实 CLI 已验证小段修改只替换受影响 Chunk、未变化 Document/Chunk 复用、格式变化只新增 Revision、删除 tombstone、解析失败零半成品、发布后强制退出幂等恢复。
+- 人工 Note 已验证 Root 内原子文件、Source Snapshot、Revision、`--if-version` 冲突，以及 managed-content Connection 对 create/update 两次 ManagedWriteReceipt 的真实扫描消费；陈旧更新不改变文件。
+- 多次增量后的当前规范 Document/Chunk Hash 与使用最终输入在新实例全量构建完全等价；Schema 3 → 4 Plan/Apply 和 Root-local backup 通过。
+- `bun run verify:phase3` 最终 Gate 已通过：24 tests / 211 assertions / 0 failures，Phase 2.5 回归与编译后二进制 Phase 3 E2E 均通过；证据库有 0 个未完成 Run、0 个 Revision/Chunk orphan，15 个 Blob 全部重新校验 Hash。
+- 本机基线：`knowledge status` 30 次 p95 63.86ms（预算 80ms），未变化 `knowledge build` 10 次 p95 73.42ms（预算 5s）且没有新增 Run/Revision/Chunk；性能数据以证据目录内 `performance.json` 为准。
+- 证据保存在 `.test-runs/roadmap/2026-07-11/phase-3/`；合成数据位于忽略提交的 `data/test-runs/phase-3-real-cli/`。本阶段未读取 `~/notes`，未调用模型。
 
 ## 8. Phase 4：全文、向量与混合检索
 

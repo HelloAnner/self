@@ -1,6 +1,6 @@
 # Ingestion 领域
 
-> 状态：待详细设计
+> 状态：Phase 3 核心闭环已实现（Schema 4）
 
 ## 目标
 
@@ -45,3 +45,11 @@ queued → parsing → normalized → chunked → publishing → ready
 - 原始文件同步
 - Chunk 的长期所有权和检索索引
 - Entity、Relation 和 Claim 的最终发布
+
+## 详细文档
+
+- [`model.md`](./model.md)：Run、NormalizedDocument、状态与确定性版本。
+- [`schema.md`](./schema.md)：Schema 4 的 Ingestion 表所有权。
+- [`workflows.md`](./workflows.md)：解析、发布、失败和崩溃恢复。
+- [`commands.md`](./commands.md)：Knowledge/Ingestion CLI 映射。
+- [`testing.md`](./testing.md)：真实 CLI、增量等价和故障矩阵。

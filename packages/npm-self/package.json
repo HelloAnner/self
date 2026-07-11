@@ -1,0 +1,30 @@
+{
+  "name": "@helloanner/self",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A local-first personal knowledge operating system for AI agents",
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HelloAnner/self.git"
+  },
+  "bin": {
+    "self": "bin/self.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "optionalDependencies": {
+    "@helloanner/self-darwin-arm64": "0.1.0",
+    "@helloanner/self-darwin-x64": "0.1.0",
+    "@helloanner/self-linux-arm64": "0.1.0",
+    "@helloanner/self-linux-x64": "0.1.0",
+    "@helloanner/self-linux-x64-baseline": "0.1.0",
+    "@helloanner/self-windows-x64": "0.1.0"
+  },
+  "files": [
+    "bin",
+    "README.md"
+  ]
+}

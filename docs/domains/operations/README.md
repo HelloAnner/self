@@ -1,6 +1,6 @@
 # Operations 领域
 
-> 状态：待详细设计
+> 状态：Phase 1 最小迁移能力已实现；备份、恢复与 GC 待详细设计
 
 ## 目标
 
@@ -39,3 +39,7 @@ Operations 保证单目录知识库能够长期运行、升级、校验、备份
 - 普通业务对象删除
 - Source 外部同步
 - Topic 和 Artifact 内容生成
+
+## 详细文档
+
+- [`migrations.md`](./migrations.md)：Phase 1 迁移清单、校验和、兼容模式与恢复边界。

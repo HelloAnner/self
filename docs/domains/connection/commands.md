@@ -9,6 +9,12 @@ Connection 使用两个顶层资源：
 
 `self source add --watch` 是组合快捷命令，不替代 Connection 的正式资源模型。
 
+### 当前实现边界
+
+当前已实现并进入机器可发现契约的命令是：`add/list/show/status/events/changes/watch/scan/pause/resume/retry/rebind` 和 `daemon run/start/status/stop/restart/logs`。`source add --watch` 复用同一 Application Workflow；绑定 Connection 的 `source sync` 会委托给权威 reconciliation。本文其余 `update/batch/detach/delete/restore/failures/verify/explain/daemon install` 命令保留为后续 Roadmap 契约，未注册的命令不得被文档状态误解为已经可用。
+
+Phase 3 已建立 Ingestion/Knowledge 状态机。初始扫描或后续 reconciliation 接纳 ChangeBatch 后，会同步完成 Source 归档与 Knowledge 发布；返回真实 `ingestion_run_id`/`ingestion_status`，ChangeItem 只有在发布成功后才成为 `ingested`。当前仍未引入独立后台 Job，因此兼容字段 `job_id` 保持 `null`，不能把它解读为摄入未执行。
+
 ## 2. 创建 Connection
 
 ### 2.1 监控目录
@@ -99,7 +105,7 @@ self source add ~/project/docs --kind directory --watch
   → Ingestion
 ```
 
-返回值必须同时包含 `source_id`、`connection_id`、`scan_run_id` 和 `job_id`。
+返回值必须同时包含 `source_id`、`connection_id`、`scan_run_id`、`job_id` 和摄入状态；当前同步执行摄入，`job_id` 明确为 `null`，真实执行身份由 `ingestion_run_id` 表示。
 
 `source add --watch` 与 `snapshot` 模式冲突。外部路径默认切换为 `mirror`；`import --watch` 则监控迁入后的 `content/notes/` 等 managed-content 路径，而不是继续依赖原始外部位置。
 

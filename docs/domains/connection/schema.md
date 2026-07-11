@@ -1,6 +1,8 @@
 # Connection SQLite Schema
 
 > 所有表位于唯一的 `data/self.sqlite3`。Connection 领域拥有下列表的写入规则，其他领域只能通过公开 Repository 或 Read Model 访问。
+>
+> Phase 2.5 由 `drizzle/0003_connection.sql` 落地为数据库 Schema 3。下列 SQL 使用已发布的完整资源列名，后续字段只能通过显式 Migration 增加。
 
 ## 1. 表清单
 
@@ -23,9 +25,9 @@
 
 ```sql
 CREATE TABLE data_connections (
-  id                    TEXT PRIMARY KEY,
+  connection_id         TEXT PRIMARY KEY,
   workspace_id          TEXT NOT NULL,
-  source_id             TEXT,
+  source_id             TEXT NOT NULL,
   name                  TEXT NOT NULL,
   kind                  TEXT NOT NULL CHECK (kind IN (
                           'file', 'directory', 'project', 'obsidian'
@@ -35,22 +37,23 @@ CREATE TABLE data_connections (
                           'degraded', 'error', 'detached', 'deleted'
                         )),
   watch_mode            TEXT NOT NULL CHECK (watch_mode IN (
-                          'poll', 'native', 'watch-and-reconcile'
+                          'poll', 'native', 'watch_and_reconcile'
                         )),
   scan_policy_json      TEXT NOT NULL,
   filter_policy_json    TEXT NOT NULL,
   resource_policy_json  TEXT NOT NULL,
-  config_version        INTEGER NOT NULL,
+  config_version        INTEGER NOT NULL DEFAULT 1 CHECK (config_version > 0),
   reconcile_required    INTEGER NOT NULL DEFAULT 1 CHECK (reconcile_required IN (0, 1)),
-  revision              INTEGER NOT NULL DEFAULT 1,
+  revision              INTEGER NOT NULL DEFAULT 1 CHECK (revision > 0),
   last_scan_at          TEXT,
   last_success_at       TEXT,
   next_scan_at          TEXT,
-  consecutive_failures  INTEGER NOT NULL DEFAULT 0,
+  consecutive_failures  INTEGER NOT NULL DEFAULT 0 CHECK (consecutive_failures >= 0),
   created_at            TEXT NOT NULL,
   updated_at            TEXT NOT NULL,
   deleted_at            TEXT,
-  FOREIGN KEY (source_id) REFERENCES sources(id)
+  FOREIGN KEY (workspace_id) REFERENCES workspace(workspace_id),
+  FOREIGN KEY (source_id) REFERENCES sources(source_id)
 ) STRICT;
 
 CREATE INDEX idx_connections_state_next_scan
@@ -68,7 +71,7 @@ v1 由 Application 不变量保证每个 Connection 只有一个 active Target�
 
 ```sql
 CREATE TABLE connection_targets (
-  id                    TEXT PRIMARY KEY,
+  target_id             TEXT PRIMARY KEY,
   connection_id         TEXT NOT NULL,
   uri                   TEXT NOT NULL,
   target_kind           TEXT NOT NULL CHECK (target_kind IN ('file', 'directory')),
@@ -90,12 +93,8 @@ CREATE TABLE connection_targets (
   created_at            TEXT NOT NULL,
   updated_at            TEXT NOT NULL,
   deleted_at            TEXT,
-  FOREIGN KEY (connection_id) REFERENCES data_connections(id)
+  FOREIGN KEY (connection_id) REFERENCES data_connections(connection_id)
 ) STRICT;
-
-CREATE UNIQUE INDEX idx_connection_target_active_uri
-  ON connection_targets(connection_id, uri)
-  WHERE deleted_at IS NULL;
 
 CREATE UNIQUE INDEX idx_connection_target_global_identity
   ON connection_targets(target_identity_key)
@@ -111,7 +110,7 @@ CREATE INDEX idx_connection_targets_status
 
 ```sql
 CREATE TABLE connection_scan_runs (
-  id                    TEXT PRIMARY KEY,
+  scan_run_id           TEXT PRIMARY KEY,
   connection_id         TEXT NOT NULL,
   job_id                TEXT,
   trigger_kind          TEXT NOT NULL CHECK (trigger_kind IN (
@@ -137,7 +136,7 @@ CREATE TABLE connection_scan_runs (
   metrics_json          TEXT NOT NULL DEFAULT '{}',
   error_summary_json    TEXT,
   created_at            TEXT NOT NULL,
-  FOREIGN KEY (connection_id) REFERENCES data_connections(id)
+  FOREIGN KEY (connection_id) REFERENCES data_connections(connection_id)
 ) STRICT;
 
 CREATE INDEX idx_connection_scan_runs_history
@@ -153,7 +152,7 @@ ScanRun 是不可变历史；运行中允许更新阶段和计数，进入终态
 
 ```sql
 CREATE TABLE connection_observations (
-  id                    TEXT PRIMARY KEY,
+  observation_id        TEXT PRIMARY KEY,
   connection_id         TEXT NOT NULL,
   target_id             TEXT NOT NULL,
   relative_path         TEXT NOT NULL,
@@ -176,10 +175,10 @@ CREATE TABLE connection_observations (
   version               INTEGER NOT NULL DEFAULT 1,
   created_at            TEXT NOT NULL,
   updated_at            TEXT NOT NULL,
-  FOREIGN KEY (connection_id) REFERENCES data_connections(id),
-  FOREIGN KEY (target_id) REFERENCES connection_targets(id),
-  FOREIGN KEY (seen_in_scan_id) REFERENCES connection_scan_runs(id),
-  FOREIGN KEY (snapshot_id) REFERENCES source_snapshots(id)
+  FOREIGN KEY (connection_id) REFERENCES data_connections(connection_id),
+  FOREIGN KEY (target_id) REFERENCES connection_targets(target_id),
+  FOREIGN KEY (seen_in_scan_id) REFERENCES connection_scan_runs(scan_run_id),
+  FOREIGN KEY (snapshot_id) REFERENCES source_snapshots(snapshot_id)
 ) STRICT;
 
 CREATE UNIQUE INDEX idx_connection_observation_path
@@ -205,7 +204,7 @@ CREATE INDEX idx_connection_observation_missing
 
 ```sql
 CREATE TABLE connection_change_batches (
-  id                    TEXT PRIMARY KEY,
+  change_batch_id       TEXT PRIMARY KEY,
   connection_id         TEXT NOT NULL,
   scan_run_id           TEXT NOT NULL,
   state                 TEXT NOT NULL CHECK (state IN (
@@ -220,8 +219,8 @@ CREATE TABLE connection_change_batches (
   operation_id          TEXT,
   created_at            TEXT NOT NULL,
   updated_at            TEXT NOT NULL,
-  FOREIGN KEY (connection_id) REFERENCES data_connections(id),
-  FOREIGN KEY (scan_run_id) REFERENCES connection_scan_runs(id),
+  FOREIGN KEY (connection_id) REFERENCES data_connections(connection_id),
+  FOREIGN KEY (scan_run_id) REFERENCES connection_scan_runs(scan_run_id),
   UNIQUE (idempotency_key)
 ) STRICT;
 
@@ -235,7 +234,7 @@ Idempotency Key 推荐由 `connection_id + target inventory version + sorted cha
 
 ```sql
 CREATE TABLE connection_change_items (
-  id                    TEXT PRIMARY KEY,
+  change_item_id        TEXT PRIMARY KEY,
   batch_id              TEXT NOT NULL,
   observation_id        TEXT,
   change_kind           TEXT NOT NULL CHECK (change_kind IN (
@@ -257,10 +256,8 @@ CREATE TABLE connection_change_items (
   error_detail_json     TEXT,
   created_at            TEXT NOT NULL,
   updated_at            TEXT NOT NULL,
-  FOREIGN KEY (batch_id) REFERENCES connection_change_batches(id),
-  FOREIGN KEY (observation_id) REFERENCES connection_observations(id),
-  FOREIGN KEY (snapshot_id) REFERENCES source_snapshots(id),
-  FOREIGN KEY (document_revision_id) REFERENCES document_revisions(id)
+  FOREIGN KEY (batch_id) REFERENCES connection_change_batches(change_batch_id),
+  FOREIGN KEY (snapshot_id) REFERENCES source_snapshots(snapshot_id)
 ) STRICT;
 
 CREATE INDEX idx_connection_change_items_batch
@@ -276,7 +273,7 @@ CREATE INDEX idx_connection_change_items_path
 
 ```sql
 CREATE TABLE connection_event_hints (
-  id                    INTEGER PRIMARY KEY,
+  event_hint_id         INTEGER PRIMARY KEY,
   connection_id         TEXT NOT NULL,
   target_id             TEXT NOT NULL,
   event_kind            TEXT NOT NULL,
@@ -286,8 +283,8 @@ CREATE TABLE connection_event_hints (
   state                 TEXT NOT NULL CHECK (state IN (
                           'pending', 'coalesced', 'processed', 'expired'
                         )),
-  FOREIGN KEY (connection_id) REFERENCES data_connections(id),
-  FOREIGN KEY (target_id) REFERENCES connection_targets(id)
+  FOREIGN KEY (connection_id) REFERENCES data_connections(connection_id),
+  FOREIGN KEY (target_id) REFERENCES connection_targets(target_id)
 ) STRICT;
 
 CREATE INDEX idx_connection_event_hints_pending
@@ -300,7 +297,7 @@ Event Hint 可按短期保留策略清理；ChangeBatch 和 ScanRun 才是可审
 
 ```sql
 CREATE TABLE connection_write_receipts (
-  id                    TEXT PRIMARY KEY,
+  write_receipt_id      TEXT PRIMARY KEY,
   connection_id         TEXT NOT NULL,
   target_id             TEXT NOT NULL,
   relative_path         TEXT NOT NULL,
@@ -310,8 +307,8 @@ CREATE TABLE connection_write_receipts (
   expires_at            TEXT NOT NULL,
   consumed_at           TEXT,
   created_at            TEXT NOT NULL,
-  FOREIGN KEY (connection_id) REFERENCES data_connections(id),
-  FOREIGN KEY (target_id) REFERENCES connection_targets(id)
+  FOREIGN KEY (connection_id) REFERENCES data_connections(connection_id),
+  FOREIGN KEY (target_id) REFERENCES connection_targets(target_id)
 ) STRICT;
 
 CREATE INDEX idx_connection_write_receipts_match
@@ -325,7 +322,7 @@ Receipt 只能抑制 path 和 content hash 都完全匹配的内部写入。过�
 
 ```sql
 CREATE TABLE connection_failures (
-  id                    TEXT PRIMARY KEY,
+  failure_id            TEXT PRIMARY KEY,
   connection_id         TEXT NOT NULL,
   scan_run_id           TEXT,
   change_item_id        TEXT,
@@ -337,9 +334,8 @@ CREATE TABLE connection_failures (
   next_retry_at         TEXT,
   resolved_at           TEXT,
   detail_json           TEXT NOT NULL,
-  FOREIGN KEY (connection_id) REFERENCES data_connections(id),
-  FOREIGN KEY (scan_run_id) REFERENCES connection_scan_runs(id),
-  FOREIGN KEY (change_item_id) REFERENCES connection_change_items(id)
+  FOREIGN KEY (connection_id) REFERENCES data_connections(connection_id),
+  FOREIGN KEY (scan_run_id) REFERENCES connection_scan_runs(scan_run_id)
 ) STRICT;
 
 CREATE INDEX idx_connection_failures_retry
@@ -352,7 +348,7 @@ Detail 必须脱敏，不能保存文件完整内容或凭证。
 
 ```sql
 CREATE TABLE connection_daemon_leases (
-  workspace_id          TEXT PRIMARY KEY,
+  workspace_id          TEXT PRIMARY KEY REFERENCES workspace(workspace_id),
   instance_id           TEXT NOT NULL,
   pid                   INTEGER NOT NULL,
   host_id               TEXT NOT NULL,

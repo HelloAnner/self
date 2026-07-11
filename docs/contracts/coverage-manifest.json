@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-07-11",
+  "current_phase": 3,
+  "suites": {
+    "phase3-real-cli": "tests/harness/phase3.ts",
+    "phase3-unit": "tests/unit/ingestion-parsers.test.ts",
+    "phase3-chunker-unit": "tests/unit/semantic-chunker.test.ts"
+  },
+  "commands": {
+    "source.add": ["phase3.default-build", "phase3.archive-only", "phase3.parse-failure"],
+    "source.list": ["phase3.parse-failure"],
+    "source.sync": ["phase3.incremental-edit", "phase3.format-only", "phase3.delete", "phase3.failure-recovery"],
+    "connection.add": ["phase3.connection-ingestion", "phase3.managed-note-receipt"],
+    "connection.scan": ["phase3.connection-ingestion", "phase3.managed-note-receipt"],
+    "knowledge.build": ["phase3.default-build", "phase3.idempotent-repeat"],
+    "knowledge.rebuild": ["phase3.deterministic-rebuild"],
+    "knowledge.status": ["phase3.status-projection"],
+    "knowledge.failures": ["phase3.read-contracts"],
+    "knowledge.verify": ["phase3.evidence-chain"],
+    "knowledge.explain": ["phase3.evidence-chain"],
+    "knowledge.document.list": ["phase3.read-contracts"],
+    "knowledge.document.show": ["phase3.parser-output", "phase3.read-contracts"],
+    "knowledge.chunk.list": ["phase3.read-contracts"],
+    "knowledge.chunk.show": ["phase3.read-contracts"],
+    "ingestion.show": ["phase3.read-contracts"],
+    "ingestion.retry": ["phase3.crash-recovery"],
+    "note.create": ["phase3.managed-note-receipt"],
+    "note.update": ["phase3.managed-note-receipt", "phase3.note-version-conflict"],
+    "note.list": ["phase3.read-contracts"],
+    "note.show": ["phase3.read-contracts"]
+  },
+  "state_transitions": {
+    "ingestion.queued-to-ready": ["phase3.default-build"],
+    "ingestion.publishing-to-retry-to-ready": ["phase3.crash-recovery"],
+    "ingestion.parsing-to-failed": ["phase3.parse-failure"],
+    "source.not-started-to-ready": ["phase3.archive-only", "phase3.crash-recovery"],
+    "document.active-to-deleted": ["phase3.delete"],
+    "change-item.archived-to-ingested": ["phase3.connection-ingestion"],
+    "write-receipt.pending-to-consumed": ["phase3.managed-note-receipt"]
+  },
+  "migration_pairs": {
+    "3-to-4": ["phase3.schema-migration"]
+  },
+  "source_types": {
+    "markdown": ["phase3.parser-output"],
+    "text": ["phase3.parser-output"],
+    "html": ["phase3.parser-output"],
+    "jsonl": ["phase3.parser-output", "phase3.parse-failure"],
+    "pdf": ["phase3.parser-output"],
+    "unsupported-attachment": ["phase3.skipped-attachment"]
+  },
+  "failure_injection": {
+    "after-knowledge-publish-before-run-ready": ["phase3.crash-recovery"],
+    "invalid-jsonl": ["phase3.parse-failure"],
+    "stale-note-version": ["phase3.note-version-conflict"]
+  }
+}

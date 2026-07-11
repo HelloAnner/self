@@ -1,0 +1,17 @@
+[install]
+auto = "disable"
+linker = "isolated"
+saveTextLockfile = true
+
+[install.lockfile]
+save = true
+
+[test]
+root = "tests"
+timeout = 30000
+randomize = true
+coverage = false
+coverageSkipTestFiles = true
+coverageReporter = ["text", "lcov"]
+coverageDir = ".test-runs/coverage"
+pathIgnorePatterns = ["tests/fixtures/**", ".test-runs/**", "data/**"]

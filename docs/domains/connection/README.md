@@ -1,6 +1,6 @@
 # Connection 领域：动态数据连接与变化感知
 
-> 状态：详细设计草案
+> 状态：Phase 2.5 核心闭环与 Phase 3 Ingestion/Knowledge 投影已实现
 > 领域名称：Connection
 > 核心职责：持续监控外部文件或目录，可靠发现变化，并驱动 Source 归档与后续知识摄入
 
@@ -76,6 +76,8 @@ Connection 不负责：
 - [扫描、监听和后台进程工作流](./workflows.md)
 - [CLI 命令](./commands.md)
 - [测试设计](./testing.md)
+
+Connection 核心表由数据库 Schema 3 引入；当前 Schema 4 已交付手工/定时 reconciliation、原生 watcher 提示、Source ChangeBatch 归档、删除宽限、重命名/恢复识别、Root-local Daemon 文件锁与 SQLite Lease、崩溃恢复以及 Rebind Plan/Apply。Phase 3 已接通 Ingestion/Knowledge：成功的 ChangeItem 会推进到 `ingested`，并保存真实 `ingestion_run_id` 与 `document_revision_id` 投影；失败保持可重试状态，不伪造 Revision 或 Chunk。
 
 ## 5. 核心边界
 

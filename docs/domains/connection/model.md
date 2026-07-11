@@ -33,7 +33,7 @@ ScanRun、Observation、ChangeBatch 和 DaemonLease 是独立聚合，通过 Con
 | `name` | 人类可读名称 |
 | `kind` | `file`、`directory`、`project`、`obsidian` |
 | `state` | 当前生命周期状态 |
-| `watch_mode` | `poll`、`native`、`watch-and-reconcile` |
+| `watch_mode` | 领域/SQLite 使用 `poll`、`native`、`watch_and_reconcile`；CLI 使用 kebab-case |
 | `scan_policy` | 扫描间隔、防抖、稳定窗口等 |
 | `filter_policy` | include、exclude、隐藏文件和敏感文件规则 |
 | `resource_policy` | 并发、批量、吞吐和文件大小限制 |
@@ -99,7 +99,7 @@ deleted --restore→ paused --scan→ active/degraded
 
 ```ts
 type ScanPolicy = {
-  mode: "poll" | "native" | "watch-and-reconcile";
+  mode: "poll" | "native" | "watch_and_reconcile";
   reconcileIntervalMs: number;
   fullHashIntervalMs: number;
   eventDebounceMs: number;

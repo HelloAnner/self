@@ -20,7 +20,7 @@ Self continuously turns documents, notes, projects, conversations, and research 
 </div>
 
 > [!IMPORTANT]
-> Self has completed its initial product, architecture, domain, CLI, storage, testing, and performance design baseline. Implementation is beginning now. The repository describes contracts that the code must satisfy; it does not claim a production release yet.
+> Self has entered Phase 0 implementation. The TypeScript/Bun CLI, stable version protocol, SQLite/FTS5/sqlite-vec spike, tests, ADRs, and private npm package skeleton now run locally; the project does not claim a public or production release yet.
 
 ---
 
@@ -242,6 +242,10 @@ Self begins as a modular monolith: one CLI, one optional local daemon, one SQLit
 ```bash
 self --init
 ```
+
+Phase 1 currently delivers the portable Root, SQLite/config baseline, resumable initialization, command contracts, diagnostics, and Offline/Hosted setup state. Source onboarding, live model smoke tests, VectorSpace creation, and first indexing are activated incrementally in Phases 2–4.
+
+Phase 2 adds archive-only Source ingestion with `--no-build`: files, directories, synthetic Obsidian Vaults, stdin, and single web pages become immutable Root-local Blob/Snapshot evidence with incremental Diff and safe soft deletion. Parsing and knowledge indexing remain Phase 3 work.
 
 The interactive onboarding contract checks the platform, lets the user choose a Self root and knowledge sources, configures and tests model capabilities, creates the first vector space, starts durable indexing jobs, and finishes with a redacted health dashboard. Every step can be reviewed, skipped when optional, cancelled, or resumed.
 

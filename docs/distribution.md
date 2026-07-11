@@ -105,7 +105,7 @@ packages/npm-self/
   "name": "@helloanner/self",
   "version": "0.1.0",
   "description": "A local-first personal knowledge operating system for AI agents",
-  "license": "LICENSE-TO-BE-DECIDED",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/HelloAnner/self.git"
@@ -129,7 +129,7 @@ packages/npm-self/
 }
 ```
 
-最终 License 未决定前不能发布。示例中的 Node Engine 只是 npm Launcher 的兼容基线，必须由真实 CI 矩阵验证后冻结。
+项目采用 MIT License。示例中的 Node Engine 只是 npm Launcher 的兼容基线，必须由真实 CI 矩阵验证后冻结。
 
 ### 5.2 Platform Package
 
@@ -309,17 +309,28 @@ Apply 只能新增 Self-owned 路径，不能覆盖未知文件。
 ├── content/
 │   ├── sources/
 │   ├── notes/
-│   └── inbox/
+│   ├── inbox/
+│   └── assets/
 ├── data/
 │   └── self.sqlite3
 ├── artifacts/
+│   ├── topics/
+│   ├── reports/
+│   └── exports/
+├── templates/
 ├── models/
+│   ├── local/
+│   └── cache/
 ├── runtime/
 │   ├── init/
+│   ├── setup/
 │   ├── extensions/
-│   ├── templates/
+│   ├── jobs/
 │   ├── locks/
-│   └── logs/
+│   ├── tmp/
+│   ├── logs/
+│   ├── config-history/
+│   └── plans/
 └── backups/
 ```
 
@@ -519,7 +530,7 @@ registry-url: https://registry.npmjs.org
 - npm Namespace 所有权和 Trusted Publisher
 - Signed Tag/Release、Checksum 和 Provenance
 
-License 是需要 Maintainer 明确决定的产品/法律选择。推荐评估 Apache-2.0（包含明确 Patent Grant）与 MIT（简洁宽松），未决定前文档和 Package 示例只能使用占位符，禁止误标 License。
+Maintainer 已于 2026-07-11 明确选择 MIT License。根源码、npm Meta/Platform Package 和独立 Release 必须携带一致的 MIT `LICENSE`；第三方依赖许可证、NOTICE 与 SBOM 单独生成，不能被项目 License 覆盖。
 
 ## 21. 实施顺序
 

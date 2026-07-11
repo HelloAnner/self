@@ -1,0 +1,4 @@
+Doctor: pass
+pass	config	self.toml is valid.
+pass	runtime-assets	Platform assets are present.
+pass	database-integrity	ok

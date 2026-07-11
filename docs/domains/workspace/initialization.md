@@ -1,7 +1,9 @@
 # Workspace 初始化与交互式 Onboarding
 
-> 状态：详细设计基线
+> 状态：详细设计基线；Phase 1 已实现 Workspace Setup 纵向切片
 > 目标：让第一次接触 Self 的用户在一个可理解、可取消、可恢复的交互流程中完成系统检查、Root 创建、来源接入、模型配置、首次索引和最终自检。
+
+> 实现说明（2026-07-11）：Phase 1 已实现 System Preflight、Root 初始化、Offline/Hosted 配置分支、Setup Session、Plan/Apply、恢复入口和最终 Workspace Doctor。Hosted 分支当前只验证凭据引用是否可解析，失败会进入 `waiting_for_user`；来源接入、真实 Model/Embedding Smoke Test、VectorSpace 和首次索引分别在 Phase 2～4 接入。本阶段不读取用户资料，也不把未执行的步骤报告为成功。
 
 ## 1. 两种入口，一套业务流程
 

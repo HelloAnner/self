@@ -1,6 +1,6 @@
 # Source 领域
 
-> 状态：待详细设计
+> 状态：Phase 2 归档闭环已实现；Phase 3 默认接续 Ingestion ready
 
 ## 目标
 
@@ -48,3 +48,11 @@ Connection 发现外部变化并提交可靠 ChangeBatch；Source 接纳 ChangeB
 - `SnapshotCreated`
 - `SourceChanged`
 - `SourceDeleted`
+
+## 详细文档
+
+- [`model.md`](./model.md)：Source、Blob、Snapshot、状态与归档不变量。
+- [`schema.md`](./schema.md)：Schema v2 表、索引、事务与 Root 内文件布局。
+- [`workflows.md`](./workflows.md)：注册、归档、同步、去重、失败恢复和 Connection 接纳。
+- [`commands.md`](./commands.md)：Phase 2 CLI、JSON 输出和错误码。
+- [`testing.md`](./testing.md)：合成 Vault、本地网页、不可变证据和恢复矩阵。

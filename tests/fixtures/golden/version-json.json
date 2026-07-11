@@ -1,0 +1,18 @@
+{
+  "ok": true,
+  "data": {
+    "cli_version": "0.1.0",
+    "config_format_version": 1,
+    "database_schema_version": 4,
+    "cli_protocol_version": 1,
+    "page_ir_version": 1
+  },
+  "meta": {
+    "request_id": "<request-id>",
+    "operation_id": null,
+    "root": null,
+    "warnings": [],
+    "next_actions": []
+  },
+  "error": null
+}

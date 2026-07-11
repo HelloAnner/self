@@ -14,6 +14,8 @@
 - [Roadmap 索引](./roadmap/README.md)：按 `YYYY-MM-DD-<description>.md` 管理当前与历史实现计划。
 - [当前实现路线图](./roadmap/2026-07-11-initial-implementation.md)：Phase 0～11 的逐步实现、阶段必读、检查命令和验收证据。
 - [测试机制](./testing.md)：单目录真实 CLI 测试、测试框架、功能矩阵和发布门禁。
+- [ADR 索引](./adr/README.md)：运行时、SQLite 分发、包命名、License 和版本契约决策。
+- [跨领域契约](./contracts/identity-events-errors.md)：稳定 ID、事件 envelope、错误与退出码。
 - [领域模型](./domains/README.md)：各领域的职责、数据所有权及依赖关系。
 
 当前已经完成详细设计的领域：
@@ -21,6 +23,15 @@
 - [Workspace Initialization](./domains/workspace/initialization.md)：交互式引导、系统/组件/模型自检、恢复与非交互 Spec。
 - [Connection](./domains/connection/)：动态文件/目录连接、SQLite 表、扫描对账、Daemon、CLI 和测试矩阵。
 - [Graph](./domains/graph/)：SQLite 图存储、节点/关系/Claim/Evidence、增量重建、CLI 和测试矩阵。
+
+当前实现基线：
+
+- [Workspace Model](./domains/workspace/model.md) 与 [Schema](./domains/workspace/schema.md)。
+- [Automation CLI Contract](./domains/automation/commands.md)。
+- [SQLite/FTS5/sqlite-vec Spike](./domains/knowledge/sqlite-vector-spike.md)。
+- [Workspace Initialization](./domains/workspace/initialization.md) 的 Phase 1 Root/Setup 切片。
+- [Operations Migration](./domains/operations/migrations.md) 的数据库版本与兼容模式。
+- [Source](./domains/source/) 的 Blob/Snapshot 证据归档、增量 Diff 和软删除生命周期。
 
 ## 文档约定
 

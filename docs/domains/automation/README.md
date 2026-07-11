@@ -1,6 +1,6 @@
 # Automation 领域
 
-> 状态：待详细设计
+> 状态：Phase 2 CLI、Migration/Source Plan 契约已实现；通用 Plan/Job/Undo 待 Phase 9～10
 
 ## 目标
 
@@ -42,3 +42,8 @@ Automation 为 Agent 和人类提供一致、稳定、可审计的 CLI 操作协
 - 每个领域内部的不变量实现
 - 数据库备份与迁移算法
 - HTML 页面业务内容
+
+## 详细文档
+
+- [`commands.md`](./commands.md)：CommandSpec、Phase 0 `version` 命令、JSON envelope 和输出规则。
+- [`../../contracts/identity-events-errors.md`](../../contracts/identity-events-errors.md)：跨领域稳定 ID、事件和错误/退出码基线。

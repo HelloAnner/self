@@ -1,0 +1,21 @@
+{
+  "name": "@helloanner/self-linux-arm64",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "files": [
+    "bin",
+    "runtime",
+    "templates",
+    "migrations",
+    "build-manifest.json",
+    "checksums.txt",
+    "LICENSES"
+  ]
+}
