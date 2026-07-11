@@ -35,6 +35,7 @@ Automation 为 Agent 和人类提供一致、稳定、可审计的 CLI 操作协
 - JSON 协议在同一主版本内保持向后兼容。
 - Model Route 变更及 VectorSpace create/activate/migrate/delete 必须通过 Plan/Apply；build/compare/verify 使用可恢复 Job 或只读操作。
 - `embedding_requires_vector_space` 和 `vector_space_not_found` 是 Agent 可分支处理的稳定错误码，不得只输出自然语言提示。
+- `self --init` 交互答案和 `setup plan --spec` 必须生成相同规范 CommandRequest/Plan；Prompt Presenter 不得绕过 Application Workflow。
 
 ## 不负责
 

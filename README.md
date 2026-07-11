@@ -237,6 +237,14 @@ Self begins as a modular monolith: one CLI, one optional local daemon, one SQLit
 
 ## The experience Self is designed to create
 
+### Start with a guided setup
+
+```bash
+self --init
+```
+
+The interactive onboarding contract checks the platform, lets the user choose a Self root and knowledge sources, configures and tests model capabilities, creates the first vector space, starts durable indexing jobs, and finishes with a redacted health dashboard. Every step can be reviewed, skipped when optional, cancelled, or resumed.
+
 ### Capture without reorganizing first
 
 ```bash
@@ -358,6 +366,7 @@ The goal is to make a lifetime of knowledge inspectable, connected, trustworthy,
 | [Architecture](docs/architecture.md) | Product boundary, object model, workflows, and CLI contract |
 | [Design conventions](docs/design-conventions.md) | Canonical terminology, ownership, states, IDs, and paths |
 | [Model selection](docs/model-selection.md) | Model routing, Qwen availability, vector spaces, migration, and recovery |
+| [Distribution and onboarding](docs/distribution.md) | npm packages, clean-machine installation, interactive setup, upgrades, and supply-chain safety |
 | [Knowledge graph](docs/domains/graph/README.md) | Typed relationships, evidence, SQLite schema, rebuilds, and graph CLI |
 | [Performance](docs/performance.md) | Interactive budgets, background work, and release gates |
 | [Testing](docs/testing.md) | Real CLI, single-root, crash, recovery, and release testing |

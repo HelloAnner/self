@@ -5,6 +5,7 @@
 > 核心选择：TypeScript 7 + Bun 1.3.14 + SQLite + sqlite-vec + 模块化单体
 
 > 模型职责、千问 Embedding 建议、维度与 VectorSpace 迁移以 [`model-selection.md`](./model-selection.md) 为准；本文只定义模型接入组件和配置形态。
+> npm 平台包、全新环境和 `self --init` 以 [`distribution.md`](./distribution.md) 与 Workspace Initialization 为准。
 
 ## 1. 选型结论
 
@@ -135,6 +136,7 @@ TypeScript 7.0 刚完成原生编译器迁移，尚未提供稳定的 Compiler A
 | --- | --- | --- |
 | `commander` | `15.0.0` | CLI 参数、子命令和帮助 |
 | `@commander-js/extra-typings` | `15.0.0` | Commander 参数类型推导 |
+| `@clack/prompts` | `1.7.0` | `self --init` 的 Path、Select、Password、Spinner 和取消处理 |
 | `zod` | `4.4.3` | 输入校验、领域边界和 JSON Schema |
 | `drizzle-orm` | `0.45.2` | SQLite Schema 和类型安全普通查询 |
 | `drizzle-kit` | `0.31.10` | 开发期生成和检查 Migration |
@@ -235,6 +237,7 @@ MCP、HTTP API 和 Obsidian 插件都调用 Application 层，不复制业务逻
 | Self 功能 | 主要实现 | 说明 |
 | --- | --- | --- |
 | CLI 命令 | Commander + Zod | Commander 解析和帮助；Zod 是参数与 JSON Schema 的权威定义 |
+| 交互式 Onboarding | @clack/prompts + Setup Application Workflow | Prompt 只做展示和收集答案，不直接写文件/数据库 |
 | Agent JSON 协议 | Zod 4 | 生成 JSON Schema，并在输入和输出两端校验 |
 | 配置 | smol-toml + Zod | TOML 负责可读存储，Zod 负责默认值、升级和校验 |
 | ID | UUID v7 + 领域前缀 | 保持时间有序且可跨目录稳定引用 |
@@ -688,6 +691,16 @@ self-release-<os>-<arch>/
 - Windows arm64 在 Bun 和依赖验证稳定后启用
 
 每个平台必须执行真实 sqlite-vec load、创建向量表、删除记录、KNN、备份和 HTML E2E，不能只验证二进制能启动。
+
+### 12.4 npm 与独立二进制双渠道
+
+- `@helloanner/self` 是候选 npm Meta Package；无作用域 `self` 已被占用。
+- 每个平台 Binary/SQLite/sqlite-vec 进入精确同版本的 Optional Dependency Package。
+- npm Launcher 只定位并转发给 Bun Standalone Binary，不实现业务逻辑。
+- npm 安装不通过 Postinstall 从外部 URL 下载代码。
+- GitHub Release 提供无需 Node/Bun 的独立 tar/zip。
+- 发布使用 npm Trusted Publishing/Provenance，Meta Package 最后发布。
+- 包名、平台矩阵、Init 和 Clean Machine 测试以 [`distribution.md`](./distribution.md) 为准。
 
 ## 13. 版本策略
 

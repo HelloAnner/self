@@ -11,6 +11,7 @@
 | `engineering-standards.md` | 实现、依赖方向、红线、运行配置、构建和部署规范 |
 | `performance.md` | 交互延迟、后台吞吐、资源预算和性能门禁 |
 | `model-selection.md` | 对话模型职责、模型路由、Embedding 兼容性、维度和 VectorSpace 迁移 |
+| `distribution.md` | npm/独立二进制分发、安装、首次初始化、升级、卸载和供应链安全 |
 | `domains/<domain>/` | 该领域的聚合、状态、Schema、命令和内部工作流 |
 | `testing.md` | 全局测试策略、测试环境和发布门禁 |
 | `roadmap/README.md` 与日期 Roadmap | 计划索引、实施顺序、依赖、当日步骤和阶段验收，不重新定义业务语义 |
@@ -23,6 +24,7 @@
 | 术语 | 唯一定义 | 所有领域 |
 | --- | --- | --- |
 | Workspace | 一个由 `self.toml` 标识的完整 Self Root | Workspace |
+| SetupSession | 一次可取消、可恢复的 `self --init` 交互式配置会话 | Workspace |
 | Connection | 对外部文件/目录的持续监控关系、策略和健康状态 | Connection |
 | Target | Connection 实际读取的一个外部文件或目录 | Connection |
 | Observation | Connection 对外部文件当前状态的持久认知 | Connection |
@@ -78,6 +80,7 @@ External Target
 
 | 数据 | 唯一写入者 | 其他领域如何获知 |
 | --- | --- | --- |
+| Workspace、WorkspaceConfig、SetupSession、Capability | Workspace | Workspace Read Model / Event |
 | Connection、Target、Observation、Scan、Change | Connection | Read Model / Domain Event |
 | Source、Blob、Snapshot | Source | SnapshotCreated 等事件 |
 | Ingestion 状态和规范化草稿 | Ingestion | IngestionPublished 等事件 |
@@ -88,7 +91,7 @@ External Target
 | Artifact、Build、Page IR、Manifest | Artifact | Artifact Read Model / Event |
 | Provider、Model、ModelRoute、Invocation、PromptSpec | Model | Model Gateway / Invocation Event |
 | Plan、Operation、Job、Audit | Automation | 公共 Automation API |
-| Migration、Backup、Verification、GC | Operations | 运维报告和事件 |
+| Migration、Backup、Verification、Diagnostic、GC | Operations | 运维报告和事件 |
 
 跨领域流程由 Application 编排。一个领域不得直接修改另一个领域拥有的表；需要进度投影时，由数据所有者订阅事件后写自己的表。
 
@@ -116,6 +119,8 @@ External Target
 示例：
 
 ```text
+workspace:ws_...
+setup:stp_...
 connection:con_...
 target:ct_...
 observation:obs_...
@@ -134,6 +139,7 @@ reference:gref_...
 conflict:cfs_...
 generation:ggen_...
 extraction:gex_...
+diagnostics:diag_...
 topic:top_...
 section:sec_...
 artifact:art_...
@@ -196,6 +202,7 @@ build:bld_...
 | SQLite Schema | domain schema、roadmap、migration/testing、engineering standards |
 | 配置字段 | technology stack、engineering standards、domain workflow、testing |
 | 依赖或版本 | technology stack、build config、release tests |
+| 安装、npm 包、Init 或 Onboarding | distribution、workspace initialization、architecture、technology stack、engineering standards、testing、roadmap |
 | 模型、维度、Instruction 或 VectorSpace | model selection、model/knowledge/retrieval domain、performance、testing、roadmap |
 | 后台进程/部署 | engineering standards、domain workflow、testing、AGENTS 原则 |
 | 性能预算或索引策略 | performance、technology stack、testing、相关 domain |

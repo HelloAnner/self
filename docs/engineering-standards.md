@@ -2,7 +2,7 @@
 
 > 状态：强制工程基线
 > 适用范围：Self 的 TypeScript 源码、SQLite、CLI、模型调用、Artifact、构建产物和部署包
-> 关联文档：[总体架构](./architecture.md) · [技术选型](./technology-stack.md) · [性能边界](./performance.md) · [模型选择](./model-selection.md) · [测试机制](./testing.md)
+> 关联文档：[总体架构](./architecture.md) · [技术选型](./technology-stack.md) · [性能边界](./performance.md) · [模型选择](./model-selection.md) · [开源分发](./distribution.md) · [测试机制](./testing.md)
 
 ## 1. 规范目的
 
@@ -887,15 +887,26 @@ install -m 0755 ./self-darwin-arm64/self ~/.local/bin/self
 
 平台 sidecar 不能仅依赖二进制相邻路径永久存在。首次 `init` 或 `doctor --plan-fixes` 应将实例需要的扩展和模板复制到 Root，并记录 checksum。
 
+npm 渠道：
+
+```bash
+npm install --global @helloanner/self
+self --init
+```
+
+npm Meta Package 通过平台 Optional Dependency 携带相同 Release Binary。npm Launcher 只进行平台选择和进程转发；不得包含业务逻辑、联网下载代码或在安装时创建 Root。独立 tar/zip Release 仍必须完全不依赖 Node.js/Bun。
+
 ### 17.3 禁止的部署方式
 
-- 要求用户安装 Node.js 才能运行 Release CLI。
+- 要求独立 tar/zip Release 用户安装 Node.js 或 Bun；npm 渠道可以使用用户已有 Node/npm 作为安装和极薄 Launcher。
 - 运行时从 npm 动态下载依赖。
 - 把数据库或向量数据放进 Docker Volume 之外的未知位置。
 - 默认启动公网监听端口。
 - 自动上传用户知识以完成初始化。
 - 安装脚本修改 shell 配置但不告知用户。
 - 升级二进制时静默执行破坏性数据库 Migration。
+- npm Postinstall 从外部 URL 下载或执行未包含在 Registry Tarball 中的代码。
+- `self --init` 在未确认 Root、Network Plan 或 Model Test 前扫描目录、联网或发送用户资料。
 
 ### 17.4 Docker 的定位
 

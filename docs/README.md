@@ -10,6 +10,7 @@
 - [工程规范](./engineering-standards.md)：代码实现、架构红线、运行配置、构建和部署规范。
 - [性能边界](./performance.md)：毫秒级交互预算、后台任务边界、检索与 HTML 性能门禁。
 - [模型选择](./model-selection.md)：对话模型职责、千问 Embedding、维度、VectorSpace 与安全迁移。
+- [开源分发与初始化](./distribution.md)：npm 平台包、全新环境、`self --init`、升级、卸载和供应链安全。
 - [Roadmap 索引](./roadmap/README.md)：按 `YYYY-MM-DD-<description>.md` 管理当前与历史实现计划。
 - [当前实现路线图](./roadmap/2026-07-11-initial-implementation.md)：Phase 0～11 的逐步实现、阶段必读、检查命令和验收证据。
 - [测试机制](./testing.md)：单目录真实 CLI 测试、测试框架、功能矩阵和发布门禁。
@@ -17,6 +18,7 @@
 
 当前已经完成详细设计的领域：
 
+- [Workspace Initialization](./domains/workspace/initialization.md)：交互式引导、系统/组件/模型自检、恢复与非交互 Spec。
 - [Connection](./domains/connection/)：动态文件/目录连接、SQLite 表、扫描对账、Daemon、CLI 和测试矩阵。
 - [Graph](./domains/graph/)：SQLite 图存储、节点/关系/Claim/Evidence、增量重建、CLI 和测试矩阵。
 

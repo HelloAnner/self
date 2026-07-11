@@ -11,6 +11,7 @@
 - [工程实现、构建与部署规范](./engineering-standards.md)
 - [性能边界与响应时间预算](./performance.md)
 - [模型选择、向量空间与迁移规范](./model-selection.md)
+- [开源分发、安装与首次初始化](./distribution.md)
 - [Roadmap 索引](./roadmap/README.md)
 - [当前实现路线图](./roadmap/2026-07-11-initial-implementation.md)
 - [测试机制与测试框架](./testing.md)
@@ -605,7 +606,7 @@ self artifact export artifact:art_123 --format html
 
 | 资源 | 示例 |
 | --- | --- |
-| Workspace | `workspace:ws_123` |
+| Workspace / Setup Session / Diagnostic | `workspace:ws_123`、`setup:stp_123`、`diagnostics:diag_123` |
 | Connection / Target / Observation | `connection:con_123`、`target:ct_123`、`observation:obs_123` |
 | Source / Snapshot | `source:src_123`、`snapshot:snp_123` |
 | Ingestion / Document / Revision / Chunk | `ingestion:ing_123`、`document:doc_123`、`revision:rev_123`、`chunk:chk_123` |
@@ -649,6 +650,7 @@ self version
 
 ```text
 --root <DIR>                 指定 Self 实例，默认向上查找 self.toml
+--init                       启动人类交互式首次设置，映射到 setup --interactive
 --version                    输出 CLI、数据库格式和协议版本
 --json                       输出一个稳定的 JSON envelope
 --jsonl                      流式输出 JSON Lines，适合批量结果和进度
@@ -671,13 +673,33 @@ self version
 
 ```bash
 # 初始化一个完整的单目录实例
+self --init
+self --init --root ./my-self
 self init ./my-self
 self init ./my-self --with-vault ~/Documents/Obsidian --mode import
 
+# 可恢复 Setup 和 Agent 非交互入口
+self setup status
+self setup resume
+self setup plan --spec ./setup.toml --json
+
 # 查看实例状态
 self status
+self status --verbose
+self system info
 self doctor
+self doctor --system
+self doctor --components
+self doctor --models
+self doctor --all
 self doctor --plan-fixes
+
+# 组件、能力和诊断
+self component list
+self component verify --all
+self capability list
+self model doctor --configured
+self diagnostics collect --redact
 
 # 配置
 self config list
@@ -687,7 +709,7 @@ self config unset network.proxy
 self config validate
 ```
 
-`self init` 创建目录结构、`self.toml`、SQLite 数据库和初始模板。初始化已有目录时不得覆盖文件，除非用户显式批准生成的 Plan。
+`self --init` 是人类友好的交互式入口，负责 System Preflight、Root 选择、Init Plan、来源、模型真实测试、VectorSpace、首次索引和最终 Doctor；完整状态机见 [`domains/workspace/initialization.md`](./domains/workspace/initialization.md)。`self init <DIR>` 是底层明确目录命令。两者创建相同规范 Workspace，初始化已有目录时不得覆盖文件，除非用户显式批准生成的 Plan。
 
 `models.embedding_defaults` 只影响以后创建 VectorSpace 时的默认参数，不改变当前 Active Space，也不触发隐式重建。动态 Model、Route、VectorSpace 和 Active ID 存在 SQLite。
 

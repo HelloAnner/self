@@ -235,6 +235,15 @@ Hybrid Search 可以：
 
 但最终 JSON envelope 只能在结果稳定后输出一次，不能混入进度日志。
 
+### 5.4 `self --init` 交互性能
+
+- Prompt 切换、路径校验和本地选项响应目标 p95 < 100ms。
+- System Preflight 按组件逐项展示真实结果，不等待全部结束才刷新。
+- Source 枚举先给快速估算，完整 Hash/归档进入 Job。
+- 模型、Embedding、首次索引和 Graph Enrichment 都显示外部等待/后台进度，不能阻塞 UI 假装“初始化卡住”。
+- 用户选择 Continue in Background 后，Wizard 应在 p95 100ms 内保存 Setup Session 并返回 Job/Resume 命令。
+- `status --watch` 只读取持久 Read Model，刷新本身不触发 Scan、Model Test 或 Rebuild。
+
 ## 6. Query Embedding 策略
 
 向量 KNN 通常很快，真正可能变慢的是把用户新 Query 转成向量。

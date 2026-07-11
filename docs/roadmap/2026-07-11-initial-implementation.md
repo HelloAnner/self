@@ -44,8 +44,8 @@ pending → in_progress → completed
 
 | 阶段 | 实现前必须阅读 | 主要检查 |
 | --- | --- | --- |
-| Phase 0 | Technology Stack、Engineering Standards、Design Conventions、Testing | Runtime/扩展可行性、项目骨架、测试基座 |
-| Phase 1 | Architecture CLI、[`workspace/`](../domains/workspace/)、[`automation/`](../domains/automation/)、[`operations/`](../domains/operations/) | Root、配置、SQLite、JSON 契约 |
+| Phase 0 | [`distribution.md`](../distribution.md)、Technology Stack、Engineering Standards、Design Conventions、Testing | License/npm Scope、Runtime/平台包、项目骨架、测试基座 |
+| Phase 1 | Architecture CLI、[`workspace/`](../domains/workspace/)、[`initialization.md`](../domains/workspace/initialization.md)、[`automation/`](../domains/automation/)、[`operations/`](../domains/operations/) | `self --init`、Root、组件/模型自检、SQLite、JSON 契约 |
 | Phase 2 | [`source/`](../domains/source/)、Workspace、Automation | Blob/Snapshot、来源模式、证据不可变 |
 | Phase 2.5 | [`connection/README.md`](../domains/connection/README.md)、[`model.md`](../domains/connection/model.md)、[`schema.md`](../domains/connection/schema.md)、[`workflows.md`](../domains/connection/workflows.md)、[`commands.md`](../domains/connection/commands.md)、[`testing.md`](../domains/connection/testing.md) | Watch/Scan、Lease、ChangeBatch、崩溃恢复 |
 | Phase 3 | [`ingestion/`](../domains/ingestion/)、[`knowledge/`](../domains/knowledge/)、Source、Testing | NormalizedDocument、Revision、Chunk、增量等价 |
@@ -153,6 +153,7 @@ Self 的第一条完整价值链是：
 - 建立 ADR 目录和决策模板。
 - 建立单元测试、集成测试、Golden 测试和端到端测试框架。
 - 为各领域确定代码模块位置，保持同一模块化单体二进制和单数据库，不拆业务服务。
+- 决定 OSI License 和 npm Scope，建立 npm Meta/Platform Package 与 Clean Machine Spike。
 
 ### 必须产出的设计
 
@@ -167,6 +168,7 @@ Self 的第一条完整价值链是：
 - SQLite 能创建 FTS 表并完成一次向量插入与近邻查询。
 - `self version --json` 能返回 CLI、数据库和协议版本。
 - 所有关键技术选择都有 ADR，不依赖口头约定。
+- npm Meta Package 能在无 Bun 的干净环境定位并运行本机 Platform Binary。
 
 ## 4. Phase 1：单目录实例与 CLI 骨架
 
@@ -178,14 +180,15 @@ Self 的第一条完整价值链是：
 
 ### 工作项
 
-- 实现 `self init <DIR>`。
+- 实现 `self init <DIR>`、Init Journal、Resume 和 Rollback。
+- 实现 `self --init` 交互式 System Preflight、Root、来源、模型、VectorSpace、首次索引和最终 Doctor。
 - 创建标准目录、`self.toml` 和 `data/self.sqlite3`。
 - 实现实例根目录向上发现和 `--root`。
 - 建立迁移表、事务包装、WAL、外键和 `busy_timeout`。
 - 实现命令注册、帮助、Shell completion 和机器可读命令 Schema。
 - 实现统一 JSON envelope、错误码和退出码。
 - 实现稳定 ID、Operation ID 和 Request ID。
-- 实现 `self status`、`self config`、`self doctor` 的最小版本。
+- 实现 `self status`、`self system`、`self component`、`self capability`、`self config`、`self doctor` 和脱敏 Diagnostics 的最小版本。
 - 确保程序不会向实例根目录外写入业务数据。
 
 ### 验收标准
@@ -194,6 +197,7 @@ Self 的第一条完整价值链是：
 - 初始化已有非空目录不会覆盖未知文件。
 - 人类输出和 `--json` 输出都通过 Golden 测试。
 - 不兼容数据库版本会进入只读诊断模式，而不是尝试写入。
+- Offline 和 Hosted Setup 均能取消/恢复；模型测试失败不会破坏已完成 Workspace。
 
 ## 5. Phase 2：Source 与证据归档
 
@@ -498,6 +502,7 @@ Self 的第一条完整价值链是：
 - 实现脱敏日志、诊断包和错误分级。
 - 完成凭证加密或环境注入策略。
 - 进行真实大型 Vault 的性能、长稳和恢复测试。
+- 建立 GitHub Release、npm Platform Package、Trusted Publishing、Provenance、SBOM 和 Clean Machine 回装。
 
 ### 验收标准
 
@@ -506,6 +511,7 @@ Self 的第一条完整价值链是：
 - 迁移失败不会破坏原实例。
 - 深度校验能发现缺失文件、孤立向量和断裂证据链。
 - 大型 Vault 的首次构建和增量更新时间达到已定义性能预算。
+- npm Upgrade/Uninstall 不破坏实例，独立 Release 不依赖 Node/Bun。
 
 完成本阶段后发布 v1.0。
 
@@ -589,11 +595,11 @@ Model 从 Phase 4 开始提供 Embedding，并在 Phase 5～8 扩展能力
 
 严格按以下顺序实现。每一步都应形成一次小提交或至少一个可独立验证的工作树状态：
 
-1. 建立项目骨架、测试框架和 ADR 模板。
+1. 建立项目骨架、测试框架、ADR、License 决策和 npm Meta/Platform Package 骨架。
 2. 完成 SQLite + FTS5 + sqlite-vec 技术验证。
 3. 冻结稳定 ID、JSON envelope 和退出码。
-4. 实现 `self init`、根目录发现和配置加载。
-5. 建立数据库迁移和最小 Operation 记录。
+4. 实现 `self init`、Init Journal/Resume/Rollback、根目录发现和配置加载。
+5. 实现 `self --init` Wizard、System/Component/Model Doctor，并建立数据库迁移和最小 Operation 记录。
 6. 实现 `source add` 的单 Markdown 文件快照。
 7. 实现 DataConnection、Target、Observation 和手工 Scan。
 8. 实现 polling Daemon、ChangeBatch 和单 Leader Lease。
@@ -630,7 +636,7 @@ Model 从 Phase 4 开始提供 Embedding，并在 Phase 5～8 扩展能力
 39. 实现 Source/Note/Entity/Claim/Topic/Artifact 的软删除、恢复、Purge Plan 和 Undo Plan。
 40. 实现持久化 Job、Checkpoint、取消、Retry、优先级、Backpressure 和 Daemon 协调。
 41. 实现 SQLite Online Backup、Manifest、异地 Restore、Migration Plan、Deep Verify 和引用证明 GC。
-42. 执行 Crash Matrix、24h Soak、Small/Medium/Large 性能与跨平台 Release Suite，达到 v1.0。
+42. 执行 Crash Matrix、24h Soak、Small/Medium/Large 性能、npm Clean Machine 和跨平台 Release Suite，达到 v1.0。
 43. 从 CommandSpec 生成 MCP Server，并验证与 CLI 对同一 Application Service 的结果一致。
 44. 增加本地 HTTP API、Obsidian 插件最小入口和扩展兼容测试，不复制业务逻辑。
 45. 更新全部设计文档、命令 Schema、Migration、CHANGELOG 和当天验收摘要，将 Roadmap 状态据实收口。
@@ -643,10 +649,12 @@ bun run typecheck
 bun run lint
 bun test
 bun run build
+bun run package:local
+bun run test:install -- --channel npm --clean-machine
 ./dist/self version --json
 ```
 
-必须证明：编译产物可运行、SQLite/FTS5/sqlite-vec Spike 通过、没有 Root 外业务写入。
+必须证明：编译产物可运行、npm Platform Package 能在无 Bun 环境启动、SQLite/FTS5/sqlite-vec Spike 通过、`version/help/doctor --system` 不创建 Root、没有 Root 外业务写入。
 
 ### Step 6～14：摄入闭环检查
 
