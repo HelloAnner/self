@@ -67,20 +67,20 @@ pending → in_progress → completed
 | W2 / Phase 2 | completed | Source → Blob → Snapshot 证据闭环 | `phase-2/` |
 | W2.5 / Phase 2.5 | completed | 文件变化自动归档且 Daemon 可恢复 | `phase-2-5/` |
 | W3 / Phase 3 | completed | Snapshot → Revision → Chunk 可增量重建 | `phase-3/` |
-| W4 / Phase 4 | pending | FTS/Vector/Hybrid Search Alpha 通过 | `phase-4/` |
-| W5 / Phase 5 | pending | Graph/Claim 证据和重建等价通过 | `phase-5/` |
-| W6 / Phase 6 | pending | Ask 每个事实可 Trace | `phase-6/` |
-| W7 / Phase 7 | pending | Topic 可信综合报告可版本化 | `phase-7/` |
-| W8 / Phase 8 | pending | Page IR → HTML 离线/历史/增量通过 | `phase-8/` |
-| W9 / Phase 9 | pending | Plan/Apply/Delete/Restore/Undo 安全通过 | `phase-9/` |
-| W10 / Phase 10 | pending | Backup/Restore/Crash/Release Gate 通过 | `phase-10/` |
+| W4 / Phase 4 | completed | FTS/Vector/Hybrid Search Alpha 通过 | `phase-4/` |
+| W5 / Phase 5 | completed | Graph/Claim 证据和重建等价通过 | `phase-5/` |
+| W6 / Phase 6 | completed | Ask 每个事实可 Trace | `phase-6/` |
+| W7 / Phase 7 | completed | Topic 可信综合报告可版本化 | `phase-7/` |
+| W8 / Phase 8 | completed | Page IR → HTML 离线/历史/增量通过，MVP Gate 完成 | `phase-8/` |
+| W9 / Phase 9 | completed | Plan/Apply/Delete/Restore/Undo 安全通过 | `phase-9/` |
+| W10 / Phase 10 | in_progress | 实现与本机 RC Gate 已通过；待 24h Soak、跨平台 CI 和外部发布确认 | `phase-10/` |
 | W11 / Phase 11 | pending | CLI/MCP/HTTP 契约一致 | `phase-11/` |
 
 ## 可恢复执行检查点
 
-> 最后更新：2026-07-11，Phase 3 最终 Gate 与证据归档完成后。
+> 最后更新：2026-07-14，Phase 10 实现、Schema 11、本机 v1.0.0 RC Gate 与真实 notes 备份恢复验收完成后。
 >
-> **恢复指针：不要重复 Phase 0～3；收到下一次“继续”后，从 Phase 4 的 Read 开始，先完整阅读 Model Selection、Model、Knowledge、Retrieval、Performance 与 Testing，再设计 Schema 5。未经用户确认不进入 Phase 4。**
+> **恢复指针：不要重复 Phase 0～9，也不要重做 Phase 10 主体实现。当前停在 Phase 10 发布资格收口：代码、本机 Crash/Backup/Restore/Release Gate 和真实 notes 演练已通过；下一步须经用户确认后执行 24h Soak、GitHub 跨平台 Release Workflow，并在确认 npm Scope/Trusted Publisher 后决定是否公开发布 v1.0.0。上述资格项通过前不把 W10 标记 `completed`，也不进入 Phase 11。**
 
 | 阶段 | 状态与已经交付的稳定边界 | 验证/恢复依据 | 后续不得误判为已完成的内容 |
 | --- | --- | --- | --- |
@@ -89,7 +89,13 @@ pending → in_progress → completed
 | Phase 2 | `completed`：Schema 2、Source/Blob/Snapshot、Diff、证据去重、ChangeBatch Receipt、真实文件/目录/Obsidian/stdin/web 归档 | `.test-runs/roadmap/2026-07-11/phase-2/` | Parser/Revision/Chunk 属于 Phase 3 |
 | Phase 2.5 | `completed`：Schema 3、Connection reconciliation、ChangeBatch 自动归档、watcher 提示、Daemon Lease、崩溃恢复和 Rebind | `.test-runs/roadmap/2026-07-11/phase-2-5/` | ChangeItem 已由 Phase 3 继续推进到 `ingested` |
 | Phase 3 | `completed`：Schema 4、五类 Parser、NormalizedDocument、Document/Revision/Chunk、lineage、崩溃恢复、Note 版本和增量/全量等价 | `.test-runs/roadmap/2026-07-11/phase-3/`；合成运行根位于忽略提交的 `data/test-runs/phase-3-real-cli/` | FTS、Embedding 和 VectorSpace 属于 Phase 4 |
-| Phase 4 | `pending`：尚未创建 Schema 5 或生产实现 | 开始前核对 Phase 3 `verify.json`、Schema 4 与当前算法版本 | 下一执行阶段 |
+| Phase 4 | `completed`：Schema 5、trigram FTS Generation、Model/Invocation、VectorSpace/Embedding、Query Cache、text/vector/hybrid Search、迁移回滚和 Provider 降级 | `.test-runs/roadmap/2026-07-11/phase-4/`；合成/Live Root 均位于忽略提交的 `data/` | Graph/Claim 与 Graph fallback 属于 Phase 5；通用 Job 属于 Phase 10 |
+| Phase 5 | `completed`：Schema 6、GraphGeneration、GraphNode/Predicate、Entity/Alias/Redirect、Relation/Claim/Evidence、Conflict/Confidence、显式链接、SemanticNeighbor、有界遍历和三种导出 | `.test-runs/roadmap/2026-07-11/phase-5/`；合成、真实 Vault 与 Live Model Root 均在忽略提交的 `data/` | Ask/related/trace 与回答引用校验属于 Phase 6；通用 Job 属于 Phase 10 |
+| Phase 6 | `completed`：Schema 7、RetrievalPlan/Run、Graph Claim 扩展、最小 EvidenceContext、Answer/Statement/Citation、引用原文回映、标准未知/冲突、Ask/Related/Trace、失效与上下文重放 | `.test-runs/roadmap/2026-07-11/phase-6/`；合成与真实 `~/notes`/Hosted Model Root 均在忽略提交的 `data/` | Topic、TopicSnapshot、跨章节可信综合和增量报告属于 Phase 7；精确依赖失效可在保持正确性的前提下优化 |
+| Phase 7 | `completed`：Schema 8、Topic/Scope/Alias、SynthesisRun、不可变 TopicSnapshot、Claim 聚类、来源谱系去重、局部 Graph、六类结论、Outline/Section/Conclusion/Citation、KnowledgeGap、可信度/覆盖度/健康状态、History、Section Trace 与 stale/needs_review | `.test-runs/roadmap/2026-07-11/phase-7/`；合成和真实 notes/Hosted Graph/Topic Root 均在忽略提交的 data/ | Page IR、Artifact Build、HTML、export/diff 和受影响章节增量 topic refresh 属于 Phase 8；通用 detached Job 属于 Phase 10 |
+| Phase 8 | `completed`：Schema 9、Page IR v1、Template/Theme、Artifact/Build/Manifest、ready 不可变、完整归档、组件缓存、增量 Refresh、纯 Render、离线多/单文件 HTML、History/Diff/Open 与 HTML/Markdown/JSON Export；MVP 已达到 | `.test-runs/roadmap/2026-07-11/phase-8/`；合成浏览器 Root 与真实 `~/notes` Artifact Root 均在忽略提交的 `data/` | Topic/Artifact 安全删除、Restore、Undo 与依赖影响 Plan 属于 Phase 9；持久化 detached Job 属于 Phase 10 |
+| Phase 9 | `completed`：Schema 10、不可变 Plan/Target/OperationChange/AuditEvent、幂等、版本冲突、逐项原子结果、Source/Connection/Note/Graph/Topic/Artifact 安全生命周期、精确恢复、Undo 与零引用 Purge | `.test-runs/roadmap/2026-07-11/phase-9/`；合成 Root 与真实 `~/notes` 只读 Plan/Scan 均位于忽略提交的 `data/` | 持久化 Job、Workspace Backup/Restore、深度 Verify、GC、Crash Matrix 和 Release Suite 属于 Phase 10；对象 Restore 不等同于 Workspace Restore |
+| Phase 10 | `in_progress`：主体实现完成，CLI v1.0.0 / Schema 11 RC 已具备持久化 Job、Workspace Backup/Restore、Deep Verify、引用证明 GC、维护锁/WAL 恢复、迁移原子替换和 Release 产物 | `.test-runs/roadmap/2026-07-11/phase-10/`；合成 Crash Matrix、本机 darwin-arm64 Clean Machine Gate 与真实 `~/notes` 324 MB 备份恢复均通过 | 24h Soak、GitHub 五平台实际 CI、Trusted Publisher/npm Scope 确认和外部发布尚未执行；这四项完成前不称公开 v1.0，不进入 Phase 11 |
 
 每次阶段 Gate 后必须同步本表、上方执行看板、对应阶段的“实现证据”小节和证据目录。若工作中断，以“恢复指针”和首个 `pending` 阶段为准，不根据未提交代码猜测进度。
 
@@ -367,6 +373,20 @@ Self 的第一条完整价值链是：
 - 搜索结果可以解释来自哪一路召回以及为何进入最终排序。
 - Search Alpha 可以在真实 Obsidian Vault 上完成一次全量导入和增量更新。
 
+### 2026-07-11 实现证据
+
+- Schema 5 已落地 Model Provider/Registry/Invocation、FTS Generation、VectorSpace/Build/Embedding、active pointers、Query Cache 和 Evaluation；Schema 4 → 5 显式 Plan/Apply、Root-local backup 与迁移后查询通过。
+- FTS 使用 trigram 和 shadow Generation；swap 前进程退出时旧 Generation 继续服务，恢复后新 Generation 校验并原子切换。Knowledge ready 后按 Source 增量刷新 active FTS。
+- vec0 使用受校验的维度表和 `vector_space_id` partition key；同维不同 fingerprint、不同 Model/Revision/Instruction 不混查。Vector build 固定水位、按批 checkpoint，首批后退出可幂等继续。
+- `vector-space create|activate|migrate|delete` 使用 Plan/Apply；未覆盖完整不能 activate，A→B 激活、B→A rollback、从本地 Chunk 重建与 inactive space 删除均通过。
+- Search 已实现 text/vector/hybrid、Source/path/type/tag/time过滤、RRF 去重/基础重排、完整 Chunk→Revision→Snapshot→Blob 证据与 explain 分阶段耗时。Provider/circuit/coverage 不可用时 vector 明确失败，hybrid 返回 FTS 和 `vector_degraded`。
+- Hosted floating Model 使用公共 Sentinel fingerprint；漂移会打开 Circuit 并停止该空间 Query/写入。`models.offline=true` 阻止网络，缺凭证和 Model 调用失败保持稳定错误；Invocation 不保存正文或 Key。
+- 真实 `~/notes` 只读接入发现单批 500 上限缺陷并完成修复：5,261 个接纳 Markdown 拆为 11 个有界 ChangeBatch，形成 5,261 Document、8,613 active Chunk/FTS row；第二次扫描 Hash 复用 5,261、变化 0，未修改外部笔记。
+- 真实 DashScope `text-embedding-v4@1024` 在 `data/test-runs/phase-4-live-model/` 完成 3 个合成 Chunk 的 build/verify/activate/hybrid；实际响应 Model ID 正确，首次远程 Query Embedding 约 243ms。Key 仅临时进程注入，未进入配置、数据库或证据。
+- 最终 `bun run verify:phase4` 通过：28 tests / 248 assertions / 0 failures，Phase 2.5/3/4 编译后二进制 E2E 均通过；合成空间 516/516 覆盖，未完成 build 0，最大 Connection batch 500。
+- 性能基线：合成 FTS p95 67.54ms（预算 100ms）、缓存 Hybrid p95 75.47ms（预算 250ms）、真实 Vault FTS p95 67.82ms（预算 100ms）；EXPLAIN 确认 Source→RevisionChunk 与 active Embedding 使用索引，FTS 使用虚表索引。以证据目录内 `performance.json` 为准。
+- 证据保存在 `.test-runs/roadmap/2026-07-11/phase-4/`；原始合成、真实 Vault 归档和 Live Model Root 均在忽略提交的 `data/`，Roadmap 证据只保留聚合计数，不保存私人正文/路径。
+
 ## 9. Phase 5：Entity、Relation、Claim 与可信度
 
 ### 涉及领域
@@ -403,6 +423,20 @@ Self 的第一条完整价值链是：
 - 可信度结果包含维度和解释，不只有单个分数。
 - Graph 增量结果与同输入全量重建等价，重建期间旧 Generation 持续可查询。
 
+### 2026-07-13 实现证据
+
+- Schema 6 已落地 GraphGeneration/active pointer、稳定 GraphNode 与 Generation membership、Predicate Registry、Entity/Alias/Redirect、Relation/Claim/Evidence、ClaimRelation/Conflict、UnresolvedReference、SemanticNeighbor 和 ExtractionRun；Schema 5 → 6 使用显式 Plan/Apply、Root-local backup 和完整性检查。
+- 结构投影保存 Source→Document→Revision→Chunk，Markdown/Wiki/Embed/Citation 按不同 Predicate 保存；missing/ambiguous 保留原始 target、位置和候选，不猜测目标。
+- `graph-extract-v3` 支持 Fixture 与 OpenAI-compatible Chat Model。响应按 JSON Schema、枚举、局部 Entity 引用、精确原文摘录、受控 Predicate、Domain/Range 和 Evidence 完整性逐层校验；模型调用不在事务内，失败不发布半 Entity/Claim/Relation。
+- Claim Evidence CLI 已完整返回 Chunk、Document、Revision、Snapshot、Blob 和 Source。转载内容可绑定多条 Evidence，但相同 lineage 只计一次 corroboration；七维 Confidence 同时保存分量、等级、内部 score 和解释，争议不会被高分隐藏。
+- 互斥 Claim 同时保留并进入 ConflictSet/`contradicts`；用户 confirm/reject 改变 user verification 与状态但不删除历史。Entity create/merge、Relation create 和 Generation activate 使用 Plan/Apply，Merge 保留旧 ID Redirect。
+- Graph neighbor/path 使用默认与硬上限的 Recursive CTE，关系 out/in 组合索引和 Evidence 索引进入 EXPLAIN Gate。`graph subgraph` 返回 Cytoscape elements；JSON/JSON-LD/GraphML 导出 Active Generation 全量成员。
+- SemanticNeighbor 绑定精确 VectorSpace、双方内容 Hash、稳定 rank 和算法版本，每个 source 的 Top-K 硬上限为 8；不会自动提升为事实 Relation。
+- 编译后二进制 Phase 5 E2E 覆盖 50+ 命令调用、Schema/证据失败、来源独立性、冲突并存、遍历上限、三种导出、shadow Diff/激活/回滚、切换前退出、向量近邻、增量 Graph 切换和 Schema 5→6。
+- 真实 `~/notes` 只读数据在 `data/` 完成结构/链接图：5,261 Document、8,613 Chunk、19,136 Node、24,478 Relation；解析出 100 次已解析显式引用，6,719 个缺失目标和 363 个歧义目标（大量附件/未接入目标被保守保留），未修改外部 Vault。
+- 真实 DashScope `qwen3.7-plus-2026-05-26` 在 `data/test-runs/phase-5-live-model-fixed/` 对 2 个合成 Chunk 完成结构化抽取，形成 4 个 Entity、2 个 Claim、2 条 Evidence；不合规中间响应全部被门禁拒绝。Key 仅临时进程注入，未进入配置、数据库、Invocation 或证据。
+- 最终 `bun run verify:phase5` 通过：30 tests / 294 assertions / 0 failures，Phase 2.5/3/4/5 编译后二进制 E2E 全部通过；Phase 5 E2E 执行 68 条 CLI 命令。合成两跳 neighbor p95 70.58ms（预算 400ms），真实 Vault 一跳 p95 117.19ms（预算 150ms），真实全图构建约 46.95s；EXPLAIN 命中 relation out/in 与 Claim Evidence 覆盖索引。精确数值以证据目录文件为准，Roadmap 不保存私人正文/路径。
+
 ## 10. Phase 6：带证据问答与追溯
 
 ### 涉及领域
@@ -432,6 +466,18 @@ Self 的第一条完整价值链是：
 - `trace` 能从回答章节追溯到 Source Snapshot。
 - 同一知识快照下的回答可以重现检索上下文。
 
+### 实现证据（2026-07-13）
+
+- Schema 7 新增 `retrieval_runs`、`retrieval_candidates`、`evidence_contexts/items`、`answer_runs/statements/citations`；Query 默认只保存 SHA-256，不保存原文。所有 Citation 由外键约束在同一个 Context Item，并保存精确 Chunk 范围与 Hash。
+- `retrieval-plan-v1` 按 `shallow|normal|deep` 固化 FTS/Vector/Graph 水位、候选上限和 Context budget。Ask 从 Search seed 沿 `Chunk → mentions Entity → Claim → Claim Evidence` 有界扩展，去重后生成最小 EvidenceContext；`similar_to` 不会默认提升为事实。
+- `answer-grounded-v1` 同时支持 Fixture 与 OpenAI-compatible Chat Model。直接事实、单一来源、用户观点和冲突必须引用局部 E-key；模型摘录经过 NFKC/空白/Markdown 标点的保守匹配后回映为 Chunk 中的精确原文，Inference 至少需要两条 Citation。未知 key、伪造摘录或无引用事实返回 `answer_citation_unsupported`，不发布 Answer。
+- 标准结果 `answered|insufficient_evidence|conflicted|cannot_determine` 已进入持久协议。无证据默认不调用模型；只有显式 `--allow-model-knowledge` 才允许无 Citation 的 `model_knowledge` Statement。Claim 冲突和 `disputed` 可信度不会被回答覆盖。
+- `self trace answer:...` 返回 RetrievalRun、EvidenceContext、模型/Prompt 版本和 `Statement → Citation/Claim → Chunk → Revision → Snapshot → Source/Blob` 链；每个 Context Item 可从不可变 Chunk 重放并验证 excerpt Hash。`self related` 支持 Resource ID 有界遍历和 Query seed 的 Claim Evidence 扩展。
+- Knowledge 发布、Graph Generation 激活或 Claim moderation 会把活跃 Context/Answer cache 标记 `stale`，历史记录和证据链继续保留。Phase 6 先采用保守全失效保证正确性，后续只能在不漏失效的前提下优化为精确依赖失效。
+- 编译后二进制 Phase 6 E2E 执行 20 条 CLI 命令，覆盖冲突、资料不足、无法判断、显式模型外部知识、伪 Citation 拒绝、Evidence 变更失效、Context 重放、Related/Trace 和 Schema 6→7 Plan/Apply 迁移；最终证据合并记录 33 条 Gate/Harness 命令。
+- 真实 `~/notes` 只读归档继续位于 `data/`。DashScope `qwen3.7-plus-2026-05-26` 对真实问题完成 Hosted Ask：4 个 Context Item、13 条 Statement、13 条 Citation，所有 13 条链均回到 Revision/Snapshot/Source，重放 Hash 全部一致。Key 仅临时进程注入，`data/self.toml` 只保存环境变量名，验收后恢复 offline 模式。
+- 最终 `bun run verify:phase6` 通过：32 tests / 314 assertions / 0 failures，Phase 2.5/3/4/5/6 编译后二进制 E2E 全部通过；60 次采样的 Trace 点查 p95 69.37ms（预算 120ms），Related 一跳 p95 68.57ms（预算 150ms）。精确数值以 `.test-runs/roadmap/2026-07-11/phase-6/` 为准，证据目录不保存私人正文或凭证。
+
 ## 11. Phase 7：Topic 与可信综合报告
 
 ### 涉及领域
@@ -460,6 +506,19 @@ Self 的第一条完整价值链是：
 - 报告明确展示争议、未知项和可信度解释。
 - 每个关键结论都能追溯到 Claim 和 Chunk。
 - 相同 Topic 可以保存多个不可变报告版本。
+
+### 实现证据（2026-07-13）
+
+- Phase 7 已完成，数据库格式提升到 Schema 8。Topic、Alias、可版本 Scope、SynthesisRun、不可变 TopicSnapshot、SnapshotClaim、局部 Graph、ReportOutline、ReportSection、Conclusion、Topic Citation 和 KnowledgeGap 均由 Topic 领域写入同一 SQLite；Snapshot/Section/Conclusion/Citation 的 UPDATE/DELETE 由触发器拒绝。
+- topic create/list/show/update/build/report/history 和 trace section 已进入稳定 CLI/JSON Schema。Build 固化 RetrievalRun/EvidenceContext、FTS/Vector/Graph 水位、规则版本、输入 Hash 和父 Snapshot；相同输入的新版本收敛到相同 Snapshot Hash，章节保存 parent_section_id 与 added/modified/unchanged。
+- 可信综合确定性区分 consensus、single_source、user_opinion、inference、conflict 和 unknown。共识至少需要两个不同 source_lineage_key；三份证据中相同 Blob 的转载只计一个谱系。每个 supported Conclusion 都保存到 Claim Evidence 和完整 Chunk 的 Citation，Section Trace 可继续回到 Revision、Source Snapshot、Source 与 Blob。
+- Report/Section 同时保存 confidence_level、七维 Claim 可信解释、coverage 和 health_status；未解决冲突为 needs_review、无 Claim 为 insufficient、只有单一来源为 degraded。未知项形成 KnowledgeGap，不调用模型常识补齐。
+- Knowledge/Graph 水位变化会将当前 Topic 标记 stale；Claim confirm/reject 只将 latest Snapshot 实际包含该 Claim 的 Topic 标记 needs_review。历史 Snapshot 永不改写，旧版本可由 topic report --snapshot 继续读取。
+- 真实编译后 CLI Phase 7 E2E 执行 32 条命令，覆盖六类章节、显式排除、同 Blob 转载折叠、多版本、不可变触发器、Section Trace、stale/needs_review 和 Schema 7→8 Plan/Apply；最终证据合并记录 46 条 Gate/Harness 命令。
+- 真实 notes Hosted Graph 验收使用 DashScope qwen3.7-plus-2026-05-26。10 个真实 Chunk 的最终批次证据为 2 个复用、1 个成功、7 个结构不合格并按 Chunk 隔离，成功产出 4 条 FAISS Claim；认证/网络错误仍中止批次。该测试同时修正了普通多值 Predicate 被误判冲突的问题：规则冲突现在要求双方显式相同 conflict_scope。
+- 基于真实 Claim 的 FAISS Topic 生成 4 条单一来源结论、4 条 Citation 和 1 个 KnowledgeGap，报告为 medium/degraded；4 条 Citation Hash 与 4 条 Claim→Chunk→Revision→Snapshot→Source 链全部通过。模型 Key 仅临时进程注入，data/self.toml 已恢复 offline=true，提交证据不含正文、路径或凭证。
+- 最终 bun run verify:phase7 通过：35 tests / 342 assertions / 0 failures，历史 Phase 2.5～7 编译后二进制 E2E 全部通过；60 次采样的 topic show p95 73.66ms（预算 80ms），Section Trace p95 75.47ms（预算 120ms）。精确数值以 .test-runs/roadmap/2026-07-11/phase-7/ 为准。
+- 以上是 Phase 7 Gate 当时的边界；Page IR、Artifact Build、HTML、export/diff 和受影响组件增量 refresh 已在下方 Phase 8 完成，Phase 7 历史产物未被改写。
 
 ## 12. Phase 8：Page IR、增量构建与 HTML
 
@@ -492,6 +551,19 @@ Self 的第一条完整价值链是：
 
 完成本阶段即达到 MVP。
 
+### 实现证据（2026-07-13）
+
+- Phase 8 已完成，数据库格式提升到 Schema 9，Page IR 固定为 `self.page-ir@1`。Template、Theme、Artifact、Build、Dependency、Component、File 和 Export 统一保存在同一 SQLite；ready Build 及其子记录由触发器拒绝 UPDATE/DELETE，历史目录不被后续 Build 覆盖。
+- `knowledge-atlas@1.0.0` 使用 React 静态渲染生成多文件与单文件离线 HTML，包含 Hero、结论、证据、时间线、对比、局部图谱、冲突、未知项和资料目录。来源正文只作为 React 文本节点；恶意 `<script>` Fixture 未执行，Chromium 断网验收观察到 0 个 HTTP(S) 请求，可信度和证据抽屉可正常展开。
+- MVP 对有限局部图谱和可信度图形采用无第三方运行时的原生 HTML/CSS/SVG，而没有静默声称已经引入 ECharts/Cytoscape。该选择减少归档体积和脚本攻击面；只有后续 Page IR 出现大规模交互图表需求并补齐历史/离线 Gate 后才引入这两个可选渲染器，技术栈和 Graph/Artifact 文档已同步。
+- BuildManifest 固化 request、retrieval/knowledge 水位、Page IR、confidence、citation、Template/Theme、组件依赖和全部文件 Hash。完整移动 Self Root 后，CLI、Manifest 校验和历史 HTML 仍可使用；`latest` 只在 ready Build 完成后原子切换。
+- `topic refresh` 在 active 且输入未失效时跳过检索并且不创建 Build；stale/needs_review 时生成新 TopicSnapshot，再按稳定内容/依赖 Hash 复用组件。合成 E2E 新增一份相关 Source 后复用 2 个、重建 7 个组件；随后的纯 `artifact render` 复用全部 9 个组件。
+- `topic build/refresh/history/diff/open/export` 与 `artifact list/show/history/diff/open/render/export`、`template list` 已进入稳定 CLI/JSON Schema。Export 支持多文件 HTML、单文件 HTML、Markdown 和 JSON，目标已存在时拒绝静默覆盖；Render 不查询模型也不重新综合知识。
+- 真实编译 CLI Phase 8 E2E 覆盖 Schema 8→9 Plan/Apply、不可变触发器、历史 Build、增量/幂等 Refresh、纯 Render、多格式 Export、目录碰撞、安全转义、Root 整体移动和 Playwright 离线交互；最终证据记录 72 条命令。历史 Phase 2.5～8 编译后二进制 E2E 全部通过。
+- 忽略提交的 `data/` 真实 Workspace 已从 Schema 8 迁移到 9，并在 `models.offline=true` 下把已有真实 FAISS TopicSnapshot 编译为 1 个 ready Refresh Build：7 个组件、4 个 Page IR Citation、19 个依赖、11 个归档文件，Manifest 文件 Hash 全部有效。该阶段无需再次调用 Hosted Model；凭证、笔记正文和私有绝对路径均未写入提交证据。
+- 最终 `bun run verify:phase8` 通过：36 tests / 359 assertions / 0 failures。60 次采样的 `topic open` p95 86.88ms（预算 100ms）、Page IR 读取 p95 0.08ms（预算 80ms）、React 静态渲染 p95 1.72ms（预算 200ms）、单文件渲染 p95 1.66ms（预算 500ms）。精确结果见 `.test-runs/roadmap/2026-07-11/phase-8/`。
+- Phase 8 Exit Gate 与 Step 37 已完成，Self 达到本 Roadmap 定义的 MVP。安全修改/删除/恢复从 Phase 9 开始，持久化 Job、Backup/Restore 和 Release Gate 仍属于 Phase 10。
+
 ## 13. Phase 9：安全修改、删除与恢复
 
 ### 涉及领域
@@ -518,6 +590,19 @@ Self 的第一条完整价值链是：
 - 删除 Source 前可以准确列出受影响知识和 Topic。
 - 可恢复操作不会丢失历史 ID、Revision 和审计记录。
 - Agent 重试相同命令不会产生重复业务效果。
+
+### 实现证据（2026-07-14）
+
+- Phase 9 已完成，数据库格式提升到 Schema 10。`automation_plans`/Target、IdempotencyRecord、OperationChange、AuditEvent 和 SourcePurgeReceipt 统一进入同一个 SQLite；Plan 核心、Target、逐对象变化和审计事件由 Trigger 保证不可变，Manifest 归档在 Root 内 `runtime/plans/`。
+- `plan list/show/diff/cancel`、`operation list/show/undo --plan`、`history list/show/diff` 已进入机器可发现 CLI/JSON Schema。Plan 固化对象 version/state、before image、影响 Hash、15 分钟过期时间、可逆性和 `atomic|per_item` 声明；Apply 再校验全部前置条件，陈旧或取消 Plan 不产生业务修改。
+- Source Delete Plan 精确列出 Connection、Document、Chunk、Graph Evidence、Claim/Relation、EvidenceContext、Answer、Topic 和 Artifact 影响；Apply 在一个事务中软删除/失效，保留 Snapshot、Blob、Revision 和稳定 ID，Restore 按 OperationChange 恢复精确 before 状态。Purge 只允许所有保留引用为零的已删除 Source，成功后不可 Undo 且只留 Hash-only Receipt。
+- Connection detach/restore 与 Note update/move/delete/restore 已完成。Note move 不制造内容未变化的 Snapshot/Revision；Undo 同时补偿 `content/notes/` 文件路径与 SQLite，任何一侧失败都回滚另一侧。Note update、直接 Restore 和审核命令支持 `--if-version` 与 `--idempotency-key`。
+- Entity merge 延续 Phase 5 的版本化 Plan/Redirect 语义；Phase 9 新增 Entity/Relation/Claim confirm/reject/delete/restore，并将 Answer、Topic 和 Artifact 的依赖失效纳入同一 Operation。Topic/Artifact Delete/Restore/Undo 保留不可变 TopicSnapshot、Build、Page IR、Manifest 和离线文件。
+- 每个 Phase 9 Apply 返回逐对象 `succeeded|failed|skipped`；当前高风险命令均为单事务 `atomic`，没有伪装成已实现部分成功。相同 Plan 或相同幂等键+规范输入返回首次结果，不重复递增版本；同键不同输入返回冲突。
+- 编译后二进制真实 CLI E2E 覆盖 Schema 9→10、Plan cancel/stale、幂等 Apply、Source 精确删除/恢复与阻断/成功 Purge、Connection、Note 文件 Undo、Graph 审核和生命周期、Topic/Artifact 恢复/Undo、History/Diff 和 Audit 不可变；合成结果为 17 个 Plan、61 个 Operation、100 个 AuditEvent，关键不变量全部通过。
+- 忽略提交的 `data/` Workspace 已安全迁移到 Schema 10 并通过 Doctor；对 `~/notes` Connection 执行 dry-run 扫描 1 个连接、变化 0。随后只创建、查看、Diff 并取消 1 个真实 Artifact Delete Plan，未 Apply，Artifact 保持 `ready`；模型继续 offline，配置和证据中均无明文凭证或私人正文。
+- 最终 `bun run verify:phase9` 通过：36 tests / 385 assertions / 0 failures，类型、Lint、源文件大小、SQLite 能力、编译构建和历史 Phase 2.5～9 编译后二进制 E2E 全部通过；证据记录 88 条命令。精确结果见 `.test-runs/roadmap/2026-07-11/phase-9/`。
+- Phase 9 Exit Gate 于该检查点完成；当时留下的 Phase 10 待办现已按下节实现。保留本段作为阶段历史，当前恢复位置只以上方“可恢复执行检查点”和 Phase 10 当前 Gate 为准。
 
 ## 14. Phase 10：长期可靠性与 v1.0
 
@@ -550,7 +635,19 @@ Self 的第一条完整价值链是：
 - 大型 Vault 的首次构建和增量更新时间达到已定义性能预算。
 - npm Upgrade/Uninstall 不破坏实例，独立 Release 不依赖 Node/Bun。
 
-完成本阶段后发布 v1.0。
+### 2026-07-14 实现证据与当前 Gate
+
+- 数据库格式提升到 Schema 11：新增持久化 Job/JobEvent、Backup/BackupFile、VerificationRun/Issue、GcReceipt/Item 和 MaintenanceLease；SQLite 仍是唯一权威状态，不引入外部队列或数据库。
+- `job list|show|logs|watch|cancel|retry` 已接管 Backup、Deep Verify、Graph、VectorSpace 和 Topic 等长任务的 detached/wait 编排。Job 保存 checkpoint、进度、worker lease、attempt 和脱敏不可变事件；进程被杀、lease 过期、取消及可重试模型超时均可恢复。
+- `backup create|list|show|verify|restore` 已实现 SQLite 一致性快照、业务目录 allowlist、逐文件 SHA-256 Manifest、非覆盖 Restore Plan、staging 深度校验和原子发布。Restore 后清理来源 Root 的瞬态 worker/lock 状态，但保留业务证据。
+- `verify --deep` 检查 SQLite/FK/迁移校验和、Blob、Revision/Chunk、FTS、Vector、Claim Evidence、Artifact 文件和配置秘密；`gc --plan` 只接受带引用证明的 Blob、旧 VectorSpace 派生向量和过期临时文件，并使用 staging + Receipt 收敛崩溃恢复。
+- Schema 10→11 故障注入证明迁移副本在原子替换前失败不会改变源数据库；维护锁会回收 dead PID/expired lease，WAL 可查询并显式 checkpoint。Doctor/Diagnostics 只暴露脱敏维护状态。
+- 构建产物包含独立二进制、checksums、CycloneDX SBOM、MIT/第三方许可证和 Build Manifest；npm Meta/Platform 包统一为 1.0.0。当前平台 Clean Machine Gate 已验证无 Node/Bun PATH 的独立二进制、npm install/同版本 upgrade/uninstall，以及 Workspace Root 不随 CLI 卸载而删除。
+- 合成 Phase 10 E2E 共保留 5 个 Job、3 个 Backup、68 个 Operation，覆盖取消/重试、dead worker、模型 timeout、WAL-active Backup、恢复目标拒绝覆盖、Deep Verify 故障发现、引用证明 GC 和 stale lock。全量 Gate 为 36 tests / 402 assertions / 0 failures，类型、Lint、大小、SQLite、构建、发布回装和历史 Phase E2E 全部通过。
+- 忽略提交的真实 `data/` Workspace（来源为 `~/notes`）通过 Schema 11 Doctor、1 个 Connection dry-run（变化 0）和 Deep Verify（问题 0，31.18 秒）；324,386,563 bytes / 3,241 files 的 Backup 通过 Hash 校验，并在新测试 Root 中恢复（33.17 秒），恢复后 text search 91.31 ms 返回证据。提交证据不含私人正文或明文凭证。
+- `data/self.toml` 仅保存 DashScope OpenAI-compatible Base URL 和 `SELF_DASHSCOPE_API_KEY` 环境变量引用；当前进程未提供该变量，因此本次没有新增 Hosted 调用。既有对话/Embedding 实测证据仍保留，不能把“配置完成”误写成“本轮云端调用完成”。
+
+当前结论是 **v1.0.0 Release Candidate 主体实现和本机 Gate 完成，Phase 10 仍为 `in_progress`**。尚需执行 24h Soak、在 GitHub 上实际跑完五平台 Release Matrix、确认 npm `@helloanner` Scope/Trusted Publisher，并取得用户对外部发布的明确授权。全部通过后才能把 W10 标记 `completed` 并公开发布 v1.0.0；此前不得进入 Phase 11。
 
 ## 15. Phase 11：Agent 生态与扩展入口
 
@@ -667,7 +764,7 @@ Model 从 Phase 4 开始提供 Embedding，并在 Phase 5～8 扩展能力
 33. 实现 Topic Refresh、章节级 stale、增量检索、报告 Diff 和历史版本。
 34. 定义 Page IR v1、组件 Schema、Template、Theme、BuildManifest 和 Citation Manifest。
 35. 实现 Page IR → React 静态 HTML、多文件/单文件资源归档和原子 latest。
-36. 实现 ECharts、Cytoscape 局部图、证据抽屉、可信度和离线交互。
+36. 实现局部图、证据抽屉、可信度和离线交互；MVP 以受限原生 SVG 完成，ECharts/Cytoscape 仅在后续确有大规模交互需求时按技术栈 Gate 引入。
 37. 完成 Playwright、离线、视觉、可访问性、历史 Build 和增量 Render 测试，达到 MVP。
 38. 实现通用 Plan/Apply、版本前置条件、Operation、Audit 和幂等协议。
 39. 实现 Source/Note/Entity/Claim/Topic/Artifact 的软删除、恢复、Purge Plan 和 Undo Plan。
@@ -740,14 +837,13 @@ bun run test:browser
 
 ### Step 38～42：v1.0 检查
 
+当前进度：Step 38～41 和 Step 42 的 Crash Matrix、真实 Large Vault 恢复、本机 Clean Machine 已通过；Step 42 的 24h Soak、五平台实际 CI 和外部发布资格仍待完成。因此本节未整体完成。
+
 ```bash
-bun run test:e2e
-bun run test:crash
-bun run test:soak
-bun run test:performance -- --profile medium
-bun run test:release
-./dist/self --root <ROOT> backup create --json
-./dist/self --root <ROOT> verify --deep --json
+bun run verify:phase10
+self --root <ROOT> backup create --wait --json
+self --root <ROOT> verify --deep --wait --json
+# 发布资格收口时再执行：24h Soak 与 GitHub 五平台 release workflow
 ```
 
 必须证明：Plan/Apply、并发冲突、Backup/Restore、Migration、GC、崩溃恢复、性能和跨平台发布门禁全部通过。

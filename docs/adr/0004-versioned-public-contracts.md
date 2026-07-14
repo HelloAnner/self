@@ -20,6 +20,8 @@ Track these independent versions from the first executable:
 | CLI protocol | `1` | Automation |
 | Page IR | `1` | Artifact |
 
+Current Phase 10 values are CLI SemVer `1.0.0`, Config format `1`, Database Schema `11`, CLI protocol `1`, and Page IR `1`. The Phase 0 column remains historical and is not the current version registry.
+
 `self version --json` returns all five values in the stable JSON envelope without opening a Workspace, creating files, or accessing the network. Parser, chunker, prompt, vector-space fingerprint, and template versions are separate domain algorithm versions when those capabilities appear.
 
 ## Consequences

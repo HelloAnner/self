@@ -141,6 +141,12 @@ export async function addConnection(root: string, raw: unknown, requestId: strin
     input.paused || !input.initialScan
       ? null
       : await scanConnection(root, connectionId, { trigger: "initial" }, requestId);
+  const currentSource = scan
+    ? await (await import("../../infrastructure/source/source-reader.ts")).getSource(
+        root,
+        source.source_id,
+      )
+    : null;
   const daemon =
     input.noDaemon || input.paused
       ? null
@@ -152,9 +158,11 @@ export async function addConnection(root: string, raw: unknown, requestId: strin
     source_id: source.source_id,
     scan_run_id: scan?.scan_run_id ?? null,
     change_batch_id: scan?.change_batch_id ?? null,
+    change_batch_ids: scan?.change_batch_ids ?? [],
     snapshot_id: scan?.snapshot_id ?? source.snapshot_id,
     state: input.paused || !input.initialScan ? "paused" : "active",
-    ingestion_status: "not_started" as const,
+    ingestion_status: currentSource?.ingestion_status ?? ("not_started" as const),
+    ingestion_run_id: currentSource?.current_ingestion_run_id ?? null,
     daemon,
     reused: false,
     warnings: input.noDaemon ? ["Connection is not being scheduled by a Daemon."] : [],

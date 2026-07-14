@@ -101,6 +101,26 @@ export const CONNECTION_INPUT_SCHEMAS: Record<string, JsonSchema> = {
     },
     ["root", "connection_id", "path", "plan"],
   ),
+  "connection.detach": object(
+    {
+      root: string("Workspace Root"),
+      connection_id: string("Connection public ID"),
+      plan: { const: true },
+      idempotency_key: string("Retry-stable idempotency key"),
+      json: boolean("Emit JSON"),
+    },
+    ["root", "connection_id", "plan"],
+  ),
+  "connection.restore": object(
+    {
+      root: string("Workspace Root"),
+      connection_id: string("Connection public ID"),
+      if_version: string("Expected detached Connection revision"),
+      idempotency_key: string("Retry-stable idempotency key"),
+      json: boolean("Emit JSON"),
+    },
+    ["root", "connection_id"],
+  ),
   "daemon.run": object(
     {
       root: string("Workspace Root"),
@@ -186,6 +206,18 @@ export const CONNECTION_COMMAND_SPECS: CommandSpec[] = [
     summary: "Plan an atomic Connection target rebind",
     root: "required",
     execution: "plan",
+  },
+  {
+    id: "connection.detach",
+    summary: "Plan Connection detachment while retaining its Source",
+    root: "required",
+    execution: "plan",
+  },
+  {
+    id: "connection.restore",
+    summary: "Restore a detached Connection",
+    root: "required",
+    execution: "write",
   },
   {
     id: "daemon.run",

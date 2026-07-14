@@ -680,12 +680,24 @@ Fast Suite 应尽量控制在几分钟内。若测试变慢，应移动到合适
 - 增量与全量重建等价性通过。
 - 没有目录外业务写入。
 
+Phase 4 实现记录：合成 Gate 使用显式 test-only Fixture Provider 覆盖确定性、崩溃、漂移和迁移；Live 验收只在 `data/` 下使用临时环境变量调用 `text-embedding-v4@1024`，不把 Key 写入 Root/命令证据。真实 `~/notes` 验收只读接入 Markdown，证据归档在 `data/`，Roadmap 证据只保存聚合计数而不保存私人正文或路径。
+
 ### Knowledge Alpha
 
 - Entity、Relation、Claim 和冲突 Fixture 通过。
 - 可信度维度和来源独立性通过。
 - Ask、引用校验、资料不足和 trace 通过。
 - 至少一个真实模型 Suite 达标。
+
+Phase 6 实现记录：在 Phase 5 Graph/Claim 基线上，RetrievalPlan、Graph Claim 扩展、EvidenceContext、Answer/Statement/Citation、引用原文回映、资料不足/冲突/外部知识隔离、失效和 Answer→Snapshot trace 已通过；Schema 6→7、历史 Phase 2.5～6 编译后二进制 E2E 与真实 `qwen3.7-plus-2026-05-26` Hosted Ask 均完成。真实 `~/notes` 只读业务数据和含正文 trace 只位于忽略提交的 `data/`，Roadmap 证据仅含聚合计数。Knowledge Alpha Gate 已完成，Topic 可信综合从 Phase 7 开始。
+
+Phase 7 实现记录：Schema 8 已实现 Topic/Scope/Alias、SynthesisRun、不可变 TopicSnapshot、Claim 聚类、来源谱系去重、局部 Graph、六类可信结论、ReportSection/Conclusion/Citation、KnowledgeGap、可信度/覆盖度/健康状态、History、Section Trace 和 stale/needs_review。合成 E2E 覆盖多源共识、同 Blob 转载折叠、用户观点、推断、显式 conflict_scope 冲突、未知项、多版本与 Schema 7→8；真实 notes Hosted Graph 抽取暴露的结构不合格响应按 Chunk 隔离，真实 FAISS Topic 的全部受支持结论可回到 Claim/Chunk。正文和凭证仍只位于忽略提交的 data/，提交证据只有聚合计数。Page IR、HTML 和增量 refresh 从 Phase 8 开始。
+
+Phase 8 实现记录：Schema 9 已实现 Page IR v1、Template/Theme、Artifact/Build/Dependency/Component/File/Export、不可变 Build、完整归档、latest 原子切换、History/Diff/Open、增量 Refresh、纯 Render 和 HTML/Markdown/JSON Export。真实编译 CLI E2E 增加相关 Source 后只重建受影响组件，重复 Refresh 零检索且不新增 Build，纯 Render 复用全部组件；Chromium 断网打开多/单文件 HTML，证据抽屉可交互、网络请求为 0，恶意 script 只作为转义文本。完整移动 Root 后 CLI 和历史 HTML 继续可用。真实 notes 的 FAISS Topic 从旧 Schema 8 Snapshot 生成 Root-local 离线 Build，offline 保持 true；提交证据不保存私人正文。
+
+Phase 9 实现记录：Schema 10 已实现不可变 Plan/Target、OperationChange、AuditEvent、IdempotencyRecord 和 SourcePurgeReceipt。编译后二进制 E2E 覆盖 Schema 9→10、Plan 取消/陈旧冲突、重复 Apply/幂等键、Source 精确影响与恢复、Purge 引用阻断、Connection detach/restore、Note update/move/delete/restore/Undo、Entity/Relation/Claim 审核与生命周期、Topic/Artifact 删除恢复及 Audit 不可变；Apply 对过期时间的校验由同一通用入口强制执行。完整 Gate 为 36 tests / 385 assertions / 0 failures；真实 `data/` Workspace 通过 Doctor 和 `~/notes` Connection dry-run，并只检查后取消 Artifact Delete Plan，未 Apply、未保存凭证或私人正文。
+
+Phase 10 实现记录：Schema 11 已实现 durable Job/Event、Backup/File Manifest、VerificationRun/Issue、GcReceipt/Item 和 MaintenanceLease。编译后二进制 E2E 覆盖 Schema 10→11 迁移失败原库不变及重试、Job 取消/Retry/dead worker/model timeout、WAL-active Backup、Hash 校验、非覆盖新 Root Restore、Deep Verify 故障注入、引用证明 GC、stale lock 和 WAL 恢复。当前 Gate 为 36 tests / 402 assertions / 0 failures；darwin-arm64 独立二进制与 npm install/upgrade/uninstall 回装通过。真实 `~/notes` Workspace 的 324,386,563-byte / 3,241-file Backup 在忽略提交的 `data/` 新路径恢复并通过搜索，Deep Verify 问题数为 0。证据只保存聚合指标；Hosted Key 未出现在环境中，因此本轮没有新增云端调用。
 
 ### MVP
 
@@ -701,6 +713,8 @@ Fast Suite 应尽量控制在几分钟内。若测试变慢，应移动到合适
 - Backup Restore 在新路径和另一环境验证通过。
 - Large 数据性能预算通过。
 - Release Suite 无未解释的高优先级失败。
+
+当前资格状态：Phase 10 主体、本机 Crash Matrix、Large Workspace 恢复和 Clean Machine Gate 已通过；24h Soak 与 GitHub 五平台 Release Matrix 仍未实际完成。它们通过并取得外部发布授权之前，版本保持 v1.0.0 Release Candidate，不将本节整体标为完成。
 
 ## 15. 测试覆盖度的衡量
 

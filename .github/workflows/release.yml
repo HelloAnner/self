@@ -1,0 +1,114 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            target: darwin-arm64
+          - runner: macos-15-intel
+            target: darwin-x64
+          - runner: ubuntu-24.04
+            target: linux-x64
+          - runner: ubuntu-24.04-arm
+            target: linux-arm64
+          - runner: windows-2025
+            target: windows-x64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          package-manager-cache: false
+      - name: Install extension-capable SQLite on macOS
+        if: runner.os == 'macOS'
+        run: brew install sqlite
+      - name: Install extension-capable SQLite on Linux
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libsqlite3-0
+      - name: Locate extension-capable SQLite on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install sqlite -y
+          $dll = Get-ChildItem -Path C:\ProgramData\chocolatey -Filter sqlite3.dll -Recurse | Select-Object -First 1
+          if (-not $dll) { throw "sqlite3.dll not found" }
+          "SELF_SQLITE_LIBRARY=$($dll.FullName)" >> $env:GITHUB_ENV
+      - name: Install exact dependencies
+        run: bun install --frozen-lockfile
+      - name: Source and database gates
+        run: bun run check
+      - name: Build and stage signed-input artifacts
+        run: bun run release:stage
+      - name: Clean-machine install, backup, restore, upgrade, and uninstall gate
+        run: bun run scripts/verify-release.ts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.target }}
+          if-no-files-found: error
+          path: |
+            dist/release/v*/self-*.tar.gz
+            dist/release/v*/self-*.zip
+            dist/release/v*/release-manifest-*.json
+            dist/release/v*/npm/*/*.tgz
+
+  publish:
+    name: Publish GitHub Release and npm packages
+    needs: build
+    runs-on: ubuntu-24.04
+    environment: release
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - name: Require npm Trusted Publishing capable CLI
+        run: npm install --global npm@latest && npm --version
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: release-assets
+          merge-multiple: true
+      - name: Publish exact-version platform packages with OIDC provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          find release-assets -type f -name 'helloanner-self-*-*.tgz' ! -name 'helloanner-self-[0-9]*.tgz' -print0 \
+            | sort -z \
+            | while IFS= read -r -d '' package; do npm publish "$package" --access public; done
+      - name: Publish npm launcher last
+        shell: bash
+        run: npm publish "$(find release-assets -type f -name 'helloanner-self-[0-9]*.tgz' | head -1)" --access public
+      - name: Produce top-level checksums
+        shell: bash
+        run: |
+          find release-assets -type f \( -name '*.tar.gz' -o -name '*.zip' -o -name 'release-manifest-*.json' \) -print0 \
+            | sort -z | xargs -0 sha256sum > release-assets/SHA256SUMS
+      - name: Publish immutable GitHub Release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            $(find release-assets -type f \( -name '*.tar.gz' -o -name '*.zip' -o -name 'release-manifest-*.json' -o -name 'SHA256SUMS' \)) \
+            --verify-tag --generate-notes --title "Self ${GITHUB_REF_NAME}"

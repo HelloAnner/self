@@ -1,5 +1,7 @@
 # Graph CLI 契约
 
+> 实现状态：Phase 10 已在既有查询/构建/导出、Trace 与安全生命周期之上接入 durable Job；`--detach` 返回 Job，`--wait` 等待完成。split、复杂 update、Conflict resolve 和 Predicate 写入仍属后续范围。
+
 ## 1. 查询
 
 ```bash
@@ -40,10 +42,10 @@ self entity create --type project --name 'Self' --user-asserted --plan
 self entity update entity:ent_123 --set description='...' --plan
 self entity merge entity:ent_123 entity:ent_456 --plan
 self entity split entity:ent_123 --spec split.json --plan
-self entity confirm entity:ent_123
-self entity reject entity:ent_123 --reason '错误消歧'
-self entity delete entity:ent_123 --plan
-self entity restore entity:ent_123
+self entity confirm entity:ent_123 [--if-version 1] [--idempotency-key key]
+self entity reject entity:ent_123 --reason '错误消歧' [--if-version 1]
+self entity delete entity:ent_123 --plan [--idempotency-key key]
+self entity restore entity:ent_123 [--if-version 2]
 ```
 
 Merge/Split Plan 必须列出 Alias、Mention、Relation、Claim、Topic、Artifact 和 Redirect 影响。
@@ -146,3 +148,7 @@ self graph export --format graphml --topic topic:top_123 --output ./exports/topi
 - 高影响修改返回 Plan；`self apply` 才产生效果。
 - `--jsonl` 用于大型 Subgraph、Rebuild 进度和 Export。
 - stdout 只输出结果，模型/解析进度写 stderr。
+
+Phase 5 的 `graph subgraph` 同时返回 `nodes`、`edges` 与 Cytoscape `elements`；`graph export --scope workspace` 不使用局部子图上限，导出 Active Generation 的完整成员，并明确写入用户指定路径。
+
+Phase 9 的 delete 只软删除稳定对象和对应 GraphNode，保留 Generation、Evidence、Redirect、Claim/Relation 历史；Plan 精确列出受影响 Relation、Claim、Topic 和 Artifact。Restore 从 OperationChange 恢复相同 ID 的 before 状态并递增版本。Confirm/Reject 以一个事务写入对象状态、Answer/Topic/Artifact 失效和不可变审计；相同幂等键不会重复递增版本。

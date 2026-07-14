@@ -1,5 +1,6 @@
 import { failure } from "../../shared/errors/self-error.ts";
 import { sha256Text } from "../../shared/hash/sha256.ts";
+import { completeAutomationOperation } from "../automation/automation-repository.ts";
 import { readableKnowledgeDatabase, writableKnowledgeDatabase } from "./knowledge-db.ts";
 
 export async function createNoteRecord(
@@ -57,12 +58,21 @@ export async function updateNoteRecord(
     title: string;
     operationId: string;
     requestId: string;
+    inputHash: string;
+    idempotencyKey?: string;
   },
 ) {
   const database = await writableKnowledgeDatabase(root);
   const now = new Date().toISOString();
   try {
-    database.transaction(() => {
+    return database.transaction(() => {
+      const before = database
+        .query<Record<string, unknown>, [string]>(
+          `SELECT note_id, source_id, document_id, relative_path, title, state, version
+           FROM knowledge_notes WHERE note_id = ?`,
+        )
+        .get(input.noteId);
+      if (!before) throw failure("note_not_found", "Note does not exist", "not_found");
       const result = database
         .prepare(
           `UPDATE knowledge_notes SET document_id = ?, title = ?, version = version + 1,
@@ -71,17 +81,42 @@ export async function updateNoteRecord(
         .run(input.documentId, input.title, now, input.noteId, input.expectedVersion);
       if (result.changes !== 1)
         throw failure("note_version_conflict", "Note changed after it was read", "conflict");
-      recordOperation(
-        database,
-        input.operationId,
-        input.requestId,
-        "note.update",
-        input.noteId,
-        input.title,
-        now,
-      );
+      const after = database
+        .query<Record<string, unknown>, [string]>(
+          `SELECT note_id, source_id, document_id, relative_path, title, state, version
+           FROM knowledge_notes WHERE note_id = ?`,
+        )
+        .get(input.noteId);
+      if (!after) throw failure("note_not_found", "Note disappeared after update", "state");
+      const output = { ...after, operation_id: input.operationId };
+      completeAutomationOperation(database, {
+        plan: null,
+        operationId: input.operationId,
+        requestId: input.requestId,
+        kind: "note.update",
+        targetId: input.noteId,
+        inputHash: input.inputHash,
+        ...(input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : {}),
+        result: output,
+        changes: [
+          {
+            resourceId: input.noteId,
+            resourceKind: "note",
+            changeKind: "updated",
+            versionBefore: input.expectedVersion,
+            versionAfter: input.expectedVersion + 1,
+            before,
+            after,
+            inverse: null,
+          },
+        ],
+        reversible: false,
+        atomicity: "atomic",
+        createdAt: now,
+        completedAt: now,
+      });
+      return output;
     })();
-    return { ...(await getNote(root, input.noteId)), operation_id: input.operationId };
   } finally {
     database.close();
   }

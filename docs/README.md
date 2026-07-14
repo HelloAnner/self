@@ -23,6 +23,11 @@
 - [Workspace Initialization](./domains/workspace/initialization.md)：交互式引导、系统/组件/模型自检、恢复与非交互 Spec。
 - [Connection](./domains/connection/)：动态文件/目录连接、SQLite 表、扫描对账、Daemon、CLI 和测试矩阵。
 - [Graph](./domains/graph/)：SQLite 图存储、节点/关系/Claim/Evidence、增量重建、CLI 和测试矩阵。
+- [Model](./domains/model/)：Embedding/结构化 Chat Provider、Model/Invocation、凭证边界、漂移和测试。
+- [Retrieval](./domains/retrieval/)：FTS/Vector/Graph、EvidenceContext、Ask/Related/Trace、引用门禁和失效。
+- [Topic](./domains/topic/)：TopicSnapshot、可信综合、来源独立性、Section Trace 和增量 Refresh。
+- [Artifact](./domains/artifact/)：Page IR v1、Build/Manifest、离线 HTML、History/Diff/Export 和安全渲染。
+- [Automation](./domains/automation/)：Schema 10 Plan/Apply 与 Schema 11 durable Job、checkpoint、取消、重试和事件流。
 
 当前实现基线：
 
@@ -32,6 +37,11 @@
 - [Workspace Initialization](./domains/workspace/initialization.md) 的 Phase 1 Root/Setup 切片。
 - [Operations Migration](./domains/operations/migrations.md) 的数据库版本与兼容模式。
 - [Source](./domains/source/) 的 Blob/Snapshot 证据归档、增量 Diff 和软删除生命周期。
+- [Ingestion](./domains/ingestion/) 与 [Knowledge](./domains/knowledge/) 的 Parser、Revision/Chunk、FTS Generation、VectorSpace 和 Note。
+- [Retrieval](./domains/retrieval/) 的 text/vector/hybrid Search Alpha 与真实 Vault 性能基线。
+- [Graph](./domains/graph/) 的 Schema 6、Entity/Relation/Claim/Evidence/Conflict、Generation、可信度和真实 Vault 基线。
+- [Retrieval](./domains/retrieval/) 的 Schema 7、带证据回答、引用回映、上下文重放和真实 Vault Hosted Ask 基线。
+- [Topic](./domains/topic/) 的 Schema 8 可信综合、[Artifact](./domains/artifact/) 的 Schema 9 Page IR/离线 HTML、[Automation](./domains/automation/) 的 Schema 10 安全修改，以及 [Operations](./domains/operations/) 的 Schema 11 Job/Backup/Verify/GC。
 
 ## 文档约定
 

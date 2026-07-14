@@ -1,5 +1,6 @@
 import { cp, mkdir, rm } from "node:fs/promises";
 import { basename, delimiter, dirname, parse, resolve } from "node:path";
+import { VERSION } from "../../src/shared/version.ts";
 
 export async function runPackageSpike(root: string, executable: string): Promise<void> {
   const platformKey = platformDirectory();
@@ -55,7 +56,7 @@ export async function runPackageSpike(root: string, executable: string): Promise
   if (result.exitCode !== 0) throw new Error(result.stderr.toString());
 
   const envelope = JSON.parse(result.stdout.toString());
-  if (!envelope.ok || envelope.data.cli_version !== "0.1.0") {
+  if (!envelope.ok || envelope.data.cli_version !== VERSION.cli) {
     throw new Error("npm meta-package did not execute the platform binary");
   }
 

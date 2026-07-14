@@ -27,7 +27,7 @@ export const KNOWLEDGE_INPUT_SCHEMAS: Record<string, JsonSchema> = {
   "knowledge.rebuild": object(
     {
       ...root,
-      layer: { type: "string", enum: ["parse", "chunks", "all"] },
+      layer: { type: "string", enum: ["parse", "chunks", "fts", "vectors", "all"] },
       source: string("Optional Source public ID"),
       all: boolean("Rebuild every current Snapshot"),
     },
@@ -79,11 +79,40 @@ export const KNOWLEDGE_INPUT_SCHEMAS: Record<string, JsonSchema> = {
       title: string("Optional new title"),
       content: string("Complete Markdown body"),
       if_version: string("Required optimistic Note version"),
+      idempotency_key: string("Retry-stable idempotency key"),
     },
     ["root", "note_id", "content", "if_version"],
   ),
   "note.list": object(root, ["root"]),
   "note.show": object({ ...root, note_id: string("Note public ID") }, ["root", "note_id"]),
+  "note.move": object(
+    {
+      ...root,
+      note_id: string("Note public ID"),
+      to: string("Directory below content/notes"),
+      plan: { const: true },
+      idempotency_key: string("Retry-stable idempotency key"),
+    },
+    ["root", "note_id", "to", "plan"],
+  ),
+  "note.delete": object(
+    {
+      ...root,
+      note_id: string("Note public ID"),
+      plan: { const: true },
+      idempotency_key: string("Retry-stable idempotency key"),
+    },
+    ["root", "note_id", "plan"],
+  ),
+  "note.restore": object(
+    {
+      ...root,
+      note_id: string("Note public ID"),
+      if_version: string("Expected deleted Note version"),
+      idempotency_key: string("Retry-stable idempotency key"),
+    },
+    ["root", "note_id"],
+  ),
 };
 
 export const KNOWLEDGE_COMMAND_SPECS: CommandSpec[] = [
@@ -177,5 +206,18 @@ export const KNOWLEDGE_COMMAND_SPECS: CommandSpec[] = [
     summary: "Show a managed Note and current evidence",
     root: "required",
     execution: "read",
+  },
+  { id: "note.move", summary: "Plan a managed Note move", root: "required", execution: "plan" },
+  {
+    id: "note.delete",
+    summary: "Plan a managed Note deletion",
+    root: "required",
+    execution: "plan",
+  },
+  {
+    id: "note.restore",
+    summary: "Restore a deleted managed Note",
+    root: "required",
+    execution: "write",
   },
 ];

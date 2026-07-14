@@ -235,7 +235,11 @@ function registerSync(source: Command): void {
 }
 
 function registerLifecycle(source: Command): void {
-  const remove = source.command("delete <source-id>").option("--plan").option("--json");
+  const remove = source
+    .command("delete <source-id>")
+    .option("--plan")
+    .option("--idempotency-key <key>")
+    .option("--json");
   remove.action((sourceId: string) =>
     runCliAction({
       command: remove,
@@ -249,12 +253,49 @@ function registerLifecycle(source: Command): void {
         const { createSourceDeletePlan } = await import(
           "../../application/source/source-lifecycle.ts"
         );
-        return createSourceDeletePlan(root ?? "", sourceId, requestId);
+        return createSourceDeletePlan(
+          root ?? "",
+          sourceId,
+          requestId,
+          remove.opts<{ idempotencyKey?: string }>().idempotencyKey,
+        );
       },
       present: presentKeyValues,
     }),
   );
-  const restore = source.command("restore <source-id>").option("--json");
+  const purge = source
+    .command("purge <source-id>")
+    .option("--plan")
+    .option("--idempotency-key <key>")
+    .option("--json");
+  purge.action((sourceId: string) =>
+    runCliAction({
+      command: purge,
+      root: "required",
+      handler: async ({ root, requestId }) => {
+        if (!purge.opts<{ plan?: boolean }>().plan) {
+          throw failure("source_plan_required", "Source purge requires --plan", "state", {
+            exitCode: 10,
+          });
+        }
+        const { createSourcePurgePlan } = await import(
+          "../../application/source/source-lifecycle.ts"
+        );
+        return createSourcePurgePlan(
+          root ?? "",
+          sourceId,
+          requestId,
+          purge.opts<{ idempotencyKey?: string }>().idempotencyKey,
+        );
+      },
+      present: presentKeyValues,
+    }),
+  );
+  const restore = source
+    .command("restore <source-id>")
+    .option("--if-version <version>")
+    .option("--idempotency-key <key>")
+    .option("--json");
   restore.action((sourceId: string) =>
     runCliAction({
       command: restore,
@@ -263,11 +304,25 @@ function registerLifecycle(source: Command): void {
         const { restoreDeletedSource } = await import(
           "../../application/source/source-lifecycle.ts"
         );
-        return restoreDeletedSource(root ?? "", sourceId, requestId);
+        const options = restore.opts<{ ifVersion?: string; idempotencyKey?: string }>();
+        const ifVersion = optionalVersion(options.ifVersion, "source_input_invalid");
+        return restoreDeletedSource(root ?? "", sourceId, requestId, {
+          ...(ifVersion !== undefined ? { ifVersion } : {}),
+          ...(options.idempotencyKey ? { idempotencyKey: options.idempotencyKey } : {}),
+        });
       },
       present: presentKeyValues,
     }),
   );
+}
+
+function optionalVersion(value: string | undefined, code: string): number | undefined {
+  if (value === undefined) return undefined;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    throw failure(code, "--if-version must be a positive integer", "usage");
+  }
+  return parsed;
 }
 
 function collect(value: string, previous: string[]): string[] {

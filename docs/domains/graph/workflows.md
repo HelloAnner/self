@@ -1,5 +1,7 @@
 # Graph 工作流
 
+> 实现状态：Phase 5 已实现结构、显式链接、模型 Entity/Claim、Conflict/Confidence、SemanticNeighbor 和全量/增量 Generation 路径。
+
 ## 1. 增量构建总流程
 
 ```text
@@ -76,6 +78,8 @@ Document ID 不随路径改变。路径索引变化后：
 - 提供支持但不是同一主张 → `supports`。
 
 时间范围不同、版本不同或条件不同不自动判冲突。模型只能提出 Conflict Candidate，规则和用户可以确认。
+
+自动生成互斥 ConflictSet 时，双方还必须显式携带相同且非空的 qualifiers.conflict_scope。普通多值 Predicate 仅因 object 不同不得判冲突；历史隐式冲突在重新对齐时标记 resolved，并重新计算 Claim 可信度。
 
 ## 6. Semantic Neighbor 构建
 
@@ -164,3 +168,9 @@ Graph 随 `self.sqlite3` 一致性备份。恢复后：
 - SemanticNeighbor、closure/metrics 等派生投影允许重建。
 - 手工确认、Evidence、Redirect 和 Conflict 不得只存在于缓存/导出文件。
 - JSON-LD/GraphML 不能代替数据库备份。
+
+## 12. 当前增量发布策略
+
+Knowledge 发布后，如果已有 Active Graph，Application 会从本地当前 Revision 创建新的增量 Generation：重投影结构和显式链接，复用输入 Hash 未变化的模型结果，将 tombstoned Chunk 的 Evidence/事实标为 stale，验证后原子切换。发生变化但尚未显式调用抽取模型的 Chunk 会报告 `changed_chunks_pending_explicit_model_build`，不会用旧 Evidence 冒充新结论。没有 Active Graph 时摄入不隐式启动昂贵图构建，由首次 `graph build` 建立基线。
+
+抽取 Prompt 版本为 `graph-extract-v3`。Hosted 调用发生在事务外，响应校验后才在短事务中发布；同一规范内容、Model 和 Prompt 的结果可复用，同时为转载 Chunk 重新绑定 Evidence，来源独立性仍按 lineage key 去重。

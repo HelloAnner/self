@@ -317,6 +317,66 @@ function registerLifecycle(connection: Command): void {
       present: presentKeyValues,
     }),
   );
+  const detach = connection
+    .command("detach <connection-id>")
+    .requiredOption("--plan")
+    .option("--idempotency-key <key>")
+    .option("--json");
+  detach.action((connectionId: string) =>
+    runCliAction({
+      command: detach,
+      root: "required",
+      handler: async ({ root, requestId }) => {
+        const { createResourceMutationPlan } = await import(
+          "../../application/automation/resource-lifecycle.ts"
+        );
+        return createResourceMutationPlan(
+          root ?? "",
+          "connection_detach",
+          connectionId,
+          requestId,
+          {
+            ...(detach.opts<{ idempotencyKey?: string }>().idempotencyKey
+              ? { idempotencyKey: detach.opts<{ idempotencyKey: string }>().idempotencyKey }
+              : {}),
+          },
+        );
+      },
+      present: presentKeyValues,
+    }),
+  );
+  const restore = connection
+    .command("restore <connection-id>")
+    .option("--if-version <version>")
+    .option("--idempotency-key <key>")
+    .option("--json");
+  restore.action((connectionId: string) =>
+    runCliAction({
+      command: restore,
+      root: "required",
+      handler: async ({ root, requestId }) => {
+        const options = restore.opts<{ ifVersion?: string; idempotencyKey?: string }>();
+        const ifVersion = version(options.ifVersion);
+        const { restoreDeletedResource } = await import(
+          "../../application/automation/resource-lifecycle.ts"
+        );
+        return restoreDeletedResource(root ?? "", "connection", connectionId, requestId, {
+          ...(ifVersion !== undefined ? { ifVersion } : {}),
+          ...(options.idempotencyKey ? { idempotencyKey: options.idempotencyKey } : {}),
+        });
+      },
+      present: presentKeyValues,
+    }),
+  );
+}
+
+function version(value?: string): number | undefined {
+  if (value === undefined) return undefined;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    throw failure("connection_version_invalid", "--if-version must be a positive integer", "usage");
+  }
+  return parsed;
 }
 
 function registerDaemon(program: Command): void {

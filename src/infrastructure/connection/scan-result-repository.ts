@@ -19,7 +19,7 @@ export async function completeScan(
     previous: Observation[];
     missingPending: Observation[];
     changes: ConnectionChange[];
-    batchId: string | null;
+    batchIds: string[];
     snapshotId: string | null;
     filesHashed: number;
     filesIgnored: number;
@@ -83,31 +83,31 @@ function publishBatch(
   input: Parameters<typeof completeScan>[1],
   now: string,
 ): void {
-  if (!input.batchId || !input.snapshotId) return;
-  database
-    .prepare(
-      `UPDATE connection_change_batches SET state = 'succeeded', accepted_at = ?, completed_at = ?, updated_at = ?
+  if (input.batchIds.length === 0 || !input.snapshotId) return;
+  const completeBatch = database.prepare(
+    `UPDATE connection_change_batches SET state = 'succeeded', accepted_at = ?, completed_at = ?, updated_at = ?
        WHERE change_batch_id = ?`,
-    )
-    .run(now, now, now, input.batchId);
-  database
-    .prepare(
-      "UPDATE connection_change_items SET state = 'archived', snapshot_id = ?, updated_at = ? WHERE batch_id = ?",
-    )
-    .run(input.snapshotId, now, input.batchId);
+  );
+  const archiveItems = database.prepare(
+    "UPDATE connection_change_items SET state = 'archived', snapshot_id = ?, updated_at = ? WHERE batch_id = ?",
+  );
+  for (const batchId of input.batchIds) {
+    completeBatch.run(now, now, now, batchId);
+    archiveItems.run(input.snapshotId, now, batchId);
+  }
   if (!input.ingestionRunId) return;
-  database
-    .prepare(
-      `UPDATE connection_change_items SET state = 'ingested', ingestion_run_id = ?,
+  const ingestItems = database.prepare(
+    `UPDATE connection_change_items SET state = 'ingested', ingestion_run_id = ?,
        error_detail_json = CASE WHEN change_kind = 'deleted' THEN '{"result":"deleted"}' ELSE error_detail_json END,
        updated_at = ? WHERE batch_id = ?`,
-    )
-    .run(input.ingestionRunId, now, input.batchId);
+  );
   const revision = database.prepare(
     "UPDATE connection_change_items SET document_revision_id = ?, updated_at = ? WHERE batch_id = ? AND relative_path = ?",
   );
-  for (const document of input.publishedDocuments ?? []) {
-    revision.run(document.revision_id, now, input.batchId, document.logical_path);
+  for (const batchId of input.batchIds) {
+    ingestItems.run(input.ingestionRunId, now, batchId);
+    for (const document of input.publishedDocuments ?? [])
+      revision.run(document.revision_id, now, batchId, document.logical_path);
   }
 }
 

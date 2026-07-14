@@ -6,6 +6,12 @@ import { sha256Text } from "../../filesystem/hash.ts";
 
 export type MigrationResult = { applied: number[]; schemaVersion: number };
 
+export type MigrationVerificationIssue = {
+  code: "migration_missing" | "migration_checksum_mismatch";
+  version: number;
+  name?: string;
+};
+
 export async function migrateDatabase(database: Database): Promise<MigrationResult> {
   const directory = await locateMigrationDirectory();
   const names = (await readdir(directory)).filter((name) => /^\d+_.+\.sql$/.test(name)).sort();
@@ -45,6 +51,34 @@ export async function migrateDatabase(database: Database): Promise<MigrationResu
 export function readSchemaVersion(database: Database): number {
   const row = database.query<{ user_version: number }, []>("PRAGMA user_version").get();
   return row?.user_version ?? 0;
+}
+
+export async function verifyMigrationHistory(
+  database: Database,
+): Promise<MigrationVerificationIssue[]> {
+  const directory = await locateMigrationDirectory();
+  const files = (await readdir(directory)).filter((name) => /^\d+_.+\.sql$/.test(name)).sort();
+  const reviewed = new Map<number, { name: string; checksum: string }>();
+  for (const name of files) {
+    const version = Number.parseInt(name.split("_")[0] ?? "", 10);
+    reviewed.set(version, {
+      name,
+      checksum: sha256Text(await Bun.file(join(directory, name)).text()),
+    });
+  }
+  const applied = database
+    .query<{ version: number; name: string; checksum: string }, []>(
+      "SELECT version, name, checksum FROM schema_migrations ORDER BY version",
+    )
+    .all();
+  const issues: MigrationVerificationIssue[] = [];
+  for (const row of applied) {
+    const expected = reviewed.get(row.version);
+    if (!expected) issues.push({ code: "migration_missing", version: row.version, name: row.name });
+    else if (expected.checksum !== row.checksum)
+      issues.push({ code: "migration_checksum_mismatch", version: row.version, name: row.name });
+  }
+  return issues;
 }
 
 async function locateMigrationDirectory(): Promise<string> {

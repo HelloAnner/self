@@ -1,5 +1,8 @@
 import { join } from "node:path";
 import { z } from "zod";
+import { automationInputHash } from "../../domains/automation/index.ts";
+import { writableAutomationDatabase } from "../../infrastructure/automation/automation-db.ts";
+import { findIdempotency } from "../../infrastructure/automation/automation-repository.ts";
 import { recordManagedWriteReceipt } from "../../infrastructure/connection/managed-write-repository.ts";
 import { atomicWrite } from "../../infrastructure/filesystem/atomic-write.ts";
 import { listKnowledgeDocuments } from "../../infrastructure/knowledge/knowledge-reader.ts";
@@ -70,9 +73,24 @@ export async function createNote(
 export async function updateNote(
   root: string,
   noteId: string,
-  input: { title?: string; content: string; ifVersion: number },
+  input: { title?: string; content: string; ifVersion: number; idempotencyKey?: string },
   requestId: string,
 ) {
+  const inputHash = automationInputHash({
+    note_id: noteId,
+    title: input.title ?? null,
+    content: input.content,
+    if_version: input.ifVersion,
+  });
+  const database = await writableAutomationDatabase(root);
+  try {
+    const prior = findIdempotency(database, input.idempotencyKey, "note.update", inputHash);
+    if (prior?.result_json && typeof prior.result_json === "object") {
+      return { ...(prior.result_json as Record<string, unknown>), reused: true };
+    }
+  } finally {
+    database.close();
+  }
   const note = noteRow.parse(await getNote(root, noteId));
   if (note.version !== input.ifVersion) {
     const { failure } = await import("../../shared/errors/self-error.ts");
@@ -101,6 +119,8 @@ export async function updateNote(
     title,
     operationId,
     requestId,
+    inputHash,
+    ...(input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : {}),
   });
 }
 

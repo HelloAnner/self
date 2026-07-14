@@ -1,6 +1,7 @@
 import { cp, mkdir, readdir, rename, rm } from "node:fs/promises";
 import { resolve } from "node:path";
 import { sha256File } from "../../src/infrastructure/filesystem/hash.ts";
+import { VERSION } from "../../src/shared/version.ts";
 
 type CommandRecord = {
   argv: string[];
@@ -198,7 +199,10 @@ assert(
 
 const newer = resolve(runRoot, "newer-schema");
 await cp(moved, newer, { recursive: true });
-await run(["bun", "run", "tests/helpers/set-schema-version.ts", newer, "4"], repository);
+await run(
+  ["bun", "run", "tests/helpers/set-schema-version.ts", newer, String(VERSION.databaseSchema + 1)],
+  repository,
+);
 const newerStatus = expectOkJson(
   await run([binary, "--root", newer, "status", "--json"], repository),
 );

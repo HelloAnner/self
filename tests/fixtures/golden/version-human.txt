@@ -1,4 +1,4 @@
-Self 0.1.0
-Database schema 4
+Self 1.0.0
+Database schema 11
 CLI protocol 1
 Page IR 1

@@ -1,14 +1,19 @@
 import { Command } from "commander";
 import { VERSION } from "../shared/version.ts";
+import { registerArtifactCommands } from "./commands/register-artifact.ts";
 import { registerConfigCommands } from "./commands/register-config.ts";
 import { registerConnectionCommands } from "./commands/register-connection.ts";
+import { registerGraphCommands } from "./commands/register-graph.ts";
 import { registerInitCommands } from "./commands/register-init.ts";
 import { registerKnowledgeCommands } from "./commands/register-knowledge.ts";
 import { registerNoteCommands } from "./commands/register-note.ts";
 import { registerOperationsCommands } from "./commands/register-operations.ts";
+import { registerRetrievalCommands } from "./commands/register-retrieval.ts";
 import { registerRootlessCommands } from "./commands/register-rootless.ts";
+import { registerSearchModelCommands } from "./commands/register-search-model.ts";
 import { registerSetupCommands } from "./commands/register-setup.ts";
 import { registerSourceCommands } from "./commands/register-source.ts";
+import { registerTopicCommands } from "./commands/register-topic.ts";
 import { registerWorkspaceCommands } from "./commands/register-workspace.ts";
 import { runCliAction } from "./runtime.ts";
 
@@ -31,8 +36,13 @@ export function createProgram(): Command {
   registerOperationsCommands(program);
   registerWorkspaceCommands(program);
   registerConfigCommands(program);
+  registerArtifactCommands(program);
   registerConnectionCommands(program);
+  registerGraphCommands(program);
   registerKnowledgeCommands(program);
+  registerSearchModelCommands(program);
+  registerRetrievalCommands(program);
+  registerTopicCommands(program);
   registerNoteCommands(program);
   registerSetupCommands(program);
   registerSourceCommands(program);

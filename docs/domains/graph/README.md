@@ -1,6 +1,6 @@
 # Graph 领域
 
-> 状态：详细设计基线
+> 状态：Phase 9 已在 Phase 5 核心上实现审核、安全删除/恢复、依赖失效与不可变审计（Schema 10，2026-07-14）
 > 核心目标：把分散在不同 Source、Document、Chunk 和时间中的知识组织为可解释、可追溯、可增量重建的多关系网络。
 
 ## 1. Graph 为什么是核心能力
@@ -25,7 +25,7 @@ Graph 的权威存储是实例内同一个 `data/self.sqlite3`：
 - 有界路径和层级遍历使用 Recursive CTE。
 - 语义近邻使用 sqlite-vec 的独立派生表，不把 Top-K 相似度永久膨胀成事实边。
 - FTS 负责精确文本，Vector 负责候选召回，Graph 负责有类型、可解释的关系扩展。
-- Cytoscape.js 只负责 Artifact 中的交互展示，不是图数据库。
+- Phase 8 Artifact 使用有限原生 SVG 展示局部图谱；未来若引入 Cytoscape.js，它也只负责交互展示，不是图数据库。
 
 第一阶段不使用 Neo4j、ArangoDB、NebulaGraph 或外部 RDF Store。原因是 Self 必须单目录迁移、备份和恢复；个人知识规模下 SQLite 的邻接表、有界遍历和预计算投影足够。未来只有真实 Benchmark 证明 SQLite 不满足 Large Profile 时，才允许增加可删除、可重建的图索引 sidecar，SQLite 仍是事实源。
 
@@ -37,7 +37,7 @@ Graph 的权威存储是实例内同一个 `data/self.sqlite3`：
 | JSON | CLI、Page IR 和局部子图传输 |
 | JSON-LD | 语义互操作导出 |
 | GraphML | Gephi、Cytoscape 等图工具交换 |
-| HTML/Cytoscape JSON | Artifact 展示产物，可重建 |
+| HTML/SVG/Cytoscape JSON | Artifact 展示或交换产物，可重建 |
 | RDF/Turtle | 未来可选导出，不作为第一版内部模型 |
 
 ## 3. 关系的五个层次
@@ -116,3 +116,11 @@ IngestionPublished / KnowledgeChanged
 - [`workflows.md`](./workflows.md)：增量构建、显式链接、实体消歧、全量重建和失效传播。
 - [`commands.md`](./commands.md)：Graph、Entity、Relation、Claim CLI 和错误语义。
 - [`testing.md`](./testing.md)：图结构、证据、增量等价、性能和真实 Vault 测试。
+
+## 9. Phase 5 实现边界
+
+Schema 6 已实现同库 GraphNode 邻接表、受控 Predicate、Entity/Alias/Redirect、Relation/Claim Evidence、ClaimRelation、ConflictSet、UnresolvedReference、绑定 VectorSpace 的 SemanticNeighbor 以及 GraphGeneration shadow/active 指针。稳定业务对象与 Generation 成员表分离，因此人工确认对象和历史 ID 不因重建复制；派生视图通过 `graph_generation_nodes|relations|claims` 固化每一代成员。
+
+生产 CLI 已覆盖结构/链接/模型抽取、验证、Diff、原子激活/回滚、有界邻居/路径、局部 Cytoscape 数据和 JSON/JSON-LD/GraphML 全量导出。模型输出必须依次通过 JSON Schema、精确 Evidence 摘录、受控 Predicate、Domain/Range 和 Chunk/Revision 证据校验；失败响应只留下脱敏 Invocation/ExtractionRun，不发布半事实。
+
+Phase 9 已增加 Entity/Relation/Claim 的安全 delete/restore、confirm/reject 版本/幂等前置条件、精确 Topic/Artifact 失效和通用审计；Entity merge 继续保留 Redirect 和历史边。Phase 10 起 Graph build/rebuild 的 `--detach|--wait` 使用可恢复 Job。Entity split、复杂 update、Conflict resolve 和 Predicate 写入仍属于 Phase 11 后续范围。

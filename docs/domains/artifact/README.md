@@ -1,42 +1,33 @@
 # Artifact 领域
 
-> 状态：待详细设计
+> 状态：Phase 8 MVP 与 Phase 9 安全生命周期已实现，Schema 10 / Page IR v1
 
-## 目标
+Artifact 把 Topic 的可信知识快照编译为可保存、可比较、可重新渲染的离线页面。它拥有 Page IR、Template、Theme、Artifact、Build、Manifest、文件归档和 Export；不生成 Topic 结论，也不把派生页面重新当作事实来源。
 
-Artifact 将知识和 Topic 报告编译为可保存、可比较、可重新渲染的 HTML、Markdown、JSON、图片和图表产物。
+## 已实现能力
 
-## 负责范围
+- `self.page-ir` v1 及严格组件类型校验。
+- `knowledge-atlas` React 静态模板和 `self-light` 本地主题。
+- Hero、结论卡、证据块、时间线、对比矩阵、SVG 局部图谱、冲突、未知项和资料目录。
+- Schema 9 Artifact/Build/Dependency/Component/File/Export 注册。
+- 每次 Build 完整归档 request、retrieval、knowledge snapshot、Page IR、confidence、changes、citations、Manifest、HTML 和内容 Hash。
+- 多文件与单文件离线 HTML、Markdown/JSON Export、History、Diff、Open 和纯 Render。
+- ready Build 及子记录不可变；新 Build 完成后才切换 SQLite latest 和 Root-local `latest.json`。
+- 组件级内容/依赖 Hash；Refresh 只重建受影响组件，纯 Render 复用全部 Page IR 组件数据。
+- MVP 图形使用有限原生 HTML/CSS/SVG，无图表脚本运行时；ECharts/Cytoscape 只在后续交互规模需要且通过历史/离线 Gate 后引入。
+- Artifact delete/restore 通过通用 Plan/Operation/Audit 执行；软删除不修改或移除任何历史 Build 文件。
 
-- Page IR Schema 和兼容性版本
-- 页面组件、模板和主题注册
-- Artifact 与 Build 生命周期
-- 输入快照、依赖清单和构建 Manifest
-- HTML 渲染、资源打包和单文件输出
-- Build 历史、父子关系和版本 Diff
-- Artifact 导出、打开、软删除和恢复
-- 模板变化下的纯重新渲染
+## 详细设计
 
-## 核心对象
+- [model.md](./model.md)：聚合、Page IR 和不变量
+- [schema.md](./schema.md)：Schema 9 表、索引、触发器和文件布局
+- [workflows.md](./workflows.md)：Build、Refresh、Render、Publish 和 Export
+- [commands.md](./commands.md)：Topic/Artifact/Template CLI 与错误语义
+- [testing.md](./testing.md)：离线浏览器、安全、迁移、性能和真实 CLI 门禁
 
-- `Artifact`：一个长期产物身份
-- `Build`：一次不可变构建
-- `PageIR`：知识表达与视觉渲染之间的中间表示
-- `Template`：页面结构规则
-- `Theme`：样式、字体和展示资源
-- `BuildManifest`：模型、模板、知识和文件依赖
-- `Export`：用户显式发布到目标位置的副本
+## 边界
 
-## 关键不变量
-
-- 每个 Build 不可变并保留父 Build。
-- 最终页面中的关键陈述必须保留 Citation 映射。
-- `latest` 只在新 Build 完整成功后原子切换。
-- 纯样式变化可以复用 Page IR，不触发知识综合。
-- 内部归档不能因用户导出文件被移动或删除而失效。
-
-## 不负责
-
-- Topic 知识结论的生成
-- Source 和 Chunk 生命周期
-- 模型供应商选择
+- Topic 领域决定结论、可信度、引用和 KnowledgeGap；Artifact 只消费稳定 Read Model。
+- Renderer 只消费完整 Page IR、Theme 和本地资源，不直接查询 SQLite 或调用模型。
+- 用户显式 Export 可以位于 Root 外；内部 Build 永远保留在 Root 相对路径下。
+- Artifact 是派生结果，不会自动进入 Source/Ingestion。

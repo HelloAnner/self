@@ -1,6 +1,6 @@
 {
   "name": "@helloanner/self-darwin-arm64",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "license": "MIT",
   "os": [
@@ -16,6 +16,7 @@
     "migrations",
     "build-manifest.json",
     "checksums.txt",
+    "sbom.cdx.json",
     "LICENSES"
   ]
 }

@@ -10,7 +10,7 @@ Self continuously turns documents, notes, projects, conversations, and research 
 
 <br />
 
-![Status](https://img.shields.io/badge/status-implementation_ready-2F6BFF?style=for-the-badge)
+![Status](https://img.shields.io/badge/status-v1.0.0_RC-2F6BFF?style=for-the-badge)
 ![Interface](https://img.shields.io/badge/interface-agent--first_CLI-121826?style=for-the-badge)
 ![Data](https://img.shields.io/badge/data-local--first-13795B?style=for-the-badge)
 ![Storage](https://img.shields.io/badge/storage-SQLite-0F80CC?style=for-the-badge&logo=sqlite&logoColor=white)
@@ -20,7 +20,7 @@ Self continuously turns documents, notes, projects, conversations, and research 
 </div>
 
 > [!IMPORTANT]
-> Self has entered Phase 0 implementation. The TypeScript/Bun CLI, stable version protocol, SQLite/FTS5/sqlite-vec spike, tests, ADRs, and private npm package skeleton now run locally; the project does not claim a public or production release yet.
+> Self is at the v1.0.0 Release Candidate stage. The compiled CLI can ingest and monitor sources, build evidence-backed knowledge and Topic snapshots, archive incremental offline HTML artifacts, perform audited Plan/Apply/Delete/Restore/Undo operations, and run durable Jobs, verified Workspace Backup/Restore, Deep Verify and reference-proven GC. The current-platform clean-machine gate has passed; 24-hour soak, remote cross-platform CI and explicit public publication are still pending, so this is not yet a public production release.
 
 ---
 
@@ -60,16 +60,17 @@ The source files remain intact and recoverable. Their contents are also normaliz
 
 | Area | Design maturity | Implementation state | Exit signal |
 | --- | --- | --- | --- |
-| Workspace and CLI contracts | Baseline complete | Queued | A portable Self root can be initialized and inspected |
-| Source evidence and snapshots | Baseline complete | Queued | Every accepted input has an immutable local snapshot |
-| Continuous connections | Detailed design complete | Queued | File changes are reconciled, archived, and recoverable |
-| Ingestion and knowledge objects | Baseline complete | Queued | Every chunk traces back to a revision and source |
-| FTS, vectors, and hybrid retrieval | Baseline complete | Queued | Search returns explainable evidence under latency budgets |
-| Typed knowledge graph | Detailed design complete | Queued | Links, entities, relations, claims, and conflicts remain distinct |
-| Evidence-grounded answers | Baseline complete | Queued | Every factual answer can be traced to retained evidence |
-| Topic synthesis | Baseline complete | Queued | Cross-source reports expose consensus, conflict, and unknowns |
-| Page IR and HTML artifacts | Baseline complete | Queued | Historical and incremental builds remain reproducible offline |
-| Safety and operations | Baseline complete | Queued | Plan/Apply, backup, restore, migration, and crash recovery pass |
+| Workspace and CLI contracts | Baseline complete | Alpha complete | A portable Self root can be initialized and inspected |
+| Source evidence and snapshots | Baseline complete | Alpha complete | Every accepted input has an immutable local snapshot |
+| Continuous connections | Detailed design complete | Alpha complete | File changes are reconciled, archived, and recoverable |
+| Ingestion and knowledge objects | Baseline complete | Alpha complete | Every chunk traces back to a revision and source |
+| FTS, vectors, and hybrid retrieval | Baseline complete | Alpha complete | Search returns explainable evidence under latency budgets |
+| Typed knowledge graph | Detailed design complete | Alpha complete | Links, entities, relations, claims, and conflicts remain distinct |
+| Evidence-grounded answers | Baseline complete | Alpha complete | Every factual answer can be traced to retained evidence |
+| Topic synthesis | Detailed design complete | MVP complete | Cross-source reports expose consensus, conflict, and unknowns |
+| Page IR and HTML artifacts | Detailed design complete | MVP complete | Historical and incremental builds remain reproducible offline |
+| Safe mutation and audit | Detailed design complete | Alpha complete | Plan/Apply, object restore, Undo, idempotency, and conflict gates pass |
+| Long-term operations | Detailed baseline complete | RC implemented | Local Backup/Restore, GC, persistent jobs, crash recovery and release reinstall gate pass; remote qualification remains |
 
 ### Delivery checkpoints
 
@@ -83,10 +84,11 @@ flowchart LR
 
     DP --> SA --> KA --> MVP --> V1
 
+    classDef complete fill:#13795B,color:#fff,stroke:#0D5C44,stroke-width:2px;
     classDef active fill:#2F6BFF,color:#fff,stroke:#1E4FD1,stroke-width:2px;
     classDef future fill:#F4F7FB,color:#27364B,stroke:#B8C4D6;
-    class DP active;
-    class SA,KA,MVP,V1 future;
+    class DP,SA,KA,MVP complete;
+    class V1 active;
 ```
 
 The active implementation plan is tracked in [the dated roadmap](docs/roadmap/2026-07-11-initial-implementation.md). Completion is evidence-based: a milestone advances only after its CLI, data, recovery, and performance gates pass.

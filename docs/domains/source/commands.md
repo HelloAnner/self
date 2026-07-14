@@ -1,6 +1,6 @@
 # Source CLI Contract
 
-> 状态：Phase 3 updated
+> 状态：Phase 9 updated
 
 ## 命令
 
@@ -13,8 +13,9 @@ self source status <source-id> [--json]
 self source files <source-id> [--snapshot <snapshot-id>] [--json]
 self source sync [source-id] [--all] [--changed-only] [--json]
 self source retry <source-id> [--json]
-self source delete <source-id> --plan [--json]
-self source restore <source-id> [--json]
+self source delete <source-id> --plan [--idempotency-key <key>] [--json]
+self source purge <source-id> --plan [--idempotency-key <key>] [--json]
+self source restore <source-id> [--if-version <n>] [--idempotency-key <key>] [--json]
 ```
 
 stdin 使用 `<input> = -`，必须给出 `--kind text|jsonl` 与 `--name`。Web 仅允许 `http:`/`https:`；Phase 2 不实现 crawl。`--include/--exclude` 使用 Workspace 统一的 `/` 分隔逻辑路径匹配。
@@ -34,6 +35,8 @@ stdin 使用 `<input> = -`，必须给出 `--kind text|jsonl` 与 `--name`。Web
 | `source_blob_corrupt` | 已存在 Blob 与其路径 Hash 不一致 |
 | `source_plan_required` | Delete 缺少 `--plan` |
 | `source_plan_conflict` | Source 在 Plan 后已变化 |
+| `source_purge_requires_delete` | Purge 前尚未软删除 Source |
+| `source_purge_blocked` | 仍存在 Connection、知识、证据、Topic 或 Graph 引用 |
 | `ingestion_parse_failed` | 归档成功，但受支持内容无法确定性解析 |
 
-`source delete` 仅生成 Plan；物理 `purge`、下游影响传播和 Undo 在 Phase 9 后实现。
+`source delete` 和 `source purge` 只生成 Plan。Delete 的影响清单精确列出 Connection、Document、Chunk、Claim/Relation Evidence、Topic、Artifact、EvidenceContext 和 Answer；Apply 以一个事务软删除/失效，保留 Snapshot、Blob、Revision 和稳定 ID。Restore 按原 OperationChange 恢复全部 before 状态并创建新版本。Purge 不可逆，只允许引用计数全为零的已删除 Source，删除 Root 内专属 Manifest/Blob 后保留 Hash-only PurgeReceipt。

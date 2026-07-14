@@ -101,8 +101,8 @@ export function presentDoctor(result: {
 function completionScript(shell: string): string {
   if (shell === "zsh") return "#compdef self\n_arguments '*: :->args'\n";
   if (shell === "bash")
-    return "complete -W 'version init status doctor config system component capability commands migration source connection daemon knowledge ingestion note' self\n";
+    return "complete -W 'version init status doctor config system component capability commands schema completion migration apply plan operation history job backup verify gc maintenance source connection daemon knowledge ingestion note model vector-space search ask related trace graph entity relation claim conflict topic artifact template' self\n";
   if (shell === "fish")
-    return "complete -c self -f -a 'version init status doctor config system component capability commands migration source connection daemon knowledge ingestion note'\n";
+    return "complete -c self -f -a 'version init status doctor config system component capability commands schema completion migration apply plan operation history job backup verify gc maintenance source connection daemon knowledge ingestion note model vector-space search ask related trace graph entity relation claim conflict topic artifact template'\n";
   throw failure("unsupported_shell", `Unsupported shell: ${shell}`, "usage");
 }

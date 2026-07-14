@@ -4,6 +4,7 @@ import { sha256File } from "../../infrastructure/filesystem/hash.ts";
 import { failure } from "../../shared/errors/self-error.ts";
 import { createResourceId, isResourceId } from "../../shared/ids/id.ts";
 import { VERSION } from "../../shared/version.ts";
+import { showMaintenanceStatus } from "../operations/maintenance.ts";
 import { doctorWorkspace } from "./workspace-doctor.ts";
 import { getWorkspaceStatus } from "./workspace-status.ts";
 
@@ -13,6 +14,7 @@ export async function collectDiagnostics(root: string) {
   const reportPath = join(directory, "diagnostics.json");
   const status = await getWorkspaceStatus(root);
   const doctor = await doctorWorkspace(root);
+  const maintenance = await showMaintenanceStatus(root);
   const report = {
     diagnostics_id: id,
     collected_at: new Date().toISOString(),
@@ -27,6 +29,10 @@ export async function collectDiagnostics(root: string) {
       warnings: status.warnings,
     },
     doctor,
+    operations: {
+      maintenance,
+      note: "Job messages and operational errors are redacted before persistence.",
+    },
     redaction: {
       secrets: "excluded",
       config_values: "excluded",

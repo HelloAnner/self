@@ -762,9 +762,12 @@ bun run lint
 bun run check:size
 bun run db:check
 bun test
-bun run test:e2e
 bun run build
+bun run release:verify
+bun run test:e2e:phase10
 ```
+
+Phase 10 RC 的聚合入口是 `bun run verify:phase10`，它还会生成脱敏 Roadmap 证据并在忽略提交的 `data/` 上执行真实 Backup/Restore。公开发布前另需 24h Soak 和 GitHub 跨平台 Matrix；本机通过不能代替远端资格。
 
 任何一步失败都禁止生成可发布版本。禁止使用 `--no-verify`、跳过类型检查或暂时关闭失败测试完成发布。
 

@@ -2,3 +2,7 @@ Doctor: pass
 pass	config	self.toml is valid.
 pass	runtime-assets	Platform assets are present.
 pass	database-integrity	ok
+pass	database-foreign-keys	Foreign-key evidence chains are valid.
+pass	migration-history	Applied migration checksums match reviewed migrations.
+pass	durable-jobs	No interrupted Jobs are waiting.
+pass	maintenance-lock	No maintenance lock is active.

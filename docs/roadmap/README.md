@@ -6,7 +6,7 @@ Roadmap 使用按日期版本化的执行文件。它不是需求愿望清单，
 
 | 日期 | 状态 | 范围 | 文件 |
 | --- | --- | --- | --- |
-| 2026-07-11 | active | 初始代码实现：Phase 0～11、Search Alpha、Knowledge Alpha、MVP 和 v1.0 | [`2026-07-11-initial-implementation.md`](./2026-07-11-initial-implementation.md) |
+| 2026-07-11 | active | Phase 0～9 完成；Phase 10 主体与本机 v1.0.0 RC Gate 完成，待 24h Soak、五平台 CI 与外部发布确认 | [`2026-07-11-initial-implementation.md`](./2026-07-11-initial-implementation.md) |
 
 ## 文件规则
 

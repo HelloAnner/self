@@ -30,20 +30,28 @@ function registerBuild(knowledge: Command): void {
     .option("--json");
   rebuild.action(() => {
     const layer = rebuild.opts<{ layer: string }>().layer;
-    if (!["parse", "chunks", "all"].includes(layer)) {
+    if (layer === "fts" || layer === "vectors")
       return runCliAction({
         command: rebuild,
         root: "required",
-        handler: () => {
-          throw failure(
-            "knowledge_layer_unavailable",
-            `Layer ${layer} is not available before its Roadmap phase`,
-            "state",
+        handler: async ({ root }) => {
+          if (layer === "fts") {
+            const { rebuildFtsIndex } = await import("../../infrastructure/knowledge/fts-index.ts");
+            return rebuildFtsIndex(root ?? "");
+          }
+          const { refreshActiveVectorSpace } = await import(
+            "../../application/knowledge/vector-space-workflows.ts"
           );
+          return refreshActiveVectorSpace(root ?? "", {
+            ...(rebuild.opts<{ source?: string }>().source
+              ? { sourceId: rebuild.opts<{ source?: string }>().source }
+              : {}),
+          });
         },
         present: presentKeyValues,
       });
-    }
+    if (!["parse", "chunks", "all"].includes(layer))
+      throw failure("knowledge_layer_unavailable", `Layer ${layer} is unavailable`, "state");
     return buildAction(rebuild, true);
   });
 }
@@ -58,7 +66,7 @@ function buildAction(command: Command, rebuild: boolean) {
         throw failure("knowledge_input_invalid", "Choose either --source or --snapshot", "usage");
       }
       const { buildKnowledge } = await import("../../application/knowledge/knowledge-workflows.ts");
-      return buildKnowledge(
+      const results = await buildKnowledge(
         root ?? "",
         {
           ...(options.source ? { sourceId: options.source } : {}),
@@ -68,6 +76,21 @@ function buildAction(command: Command, rebuild: boolean) {
         },
         requestId,
       );
+      if (rebuild && command.opts<{ layer?: string }>().layer === "all") {
+        const { refreshActiveVectorSpace } = await import(
+          "../../application/knowledge/vector-space-workflows.ts"
+        );
+        return [
+          ...results,
+          {
+            layer: "vectors",
+            ...(await refreshActiveVectorSpace(root ?? "", {
+              ...(options.source ? { sourceId: options.source } : {}),
+            })),
+          },
+        ];
+      }
+      return results;
     },
     present: presentList,
   });

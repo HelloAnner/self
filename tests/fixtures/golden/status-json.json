@@ -6,7 +6,7 @@
     "state": "active",
     "mode": "read_write",
     "config_format_version": 1,
-    "database_schema_version": 4,
+    "database_schema_version": 11,
     "database_size_bytes": "<bytes>",
     "capabilities": [
       { "name": "fts", "status": "available", "version": "fts5" },

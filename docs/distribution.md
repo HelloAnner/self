@@ -1,6 +1,6 @@
 # Self 开源分发、安装与首次初始化
 
-> 状态：发布与安装设计基线
+> 状态：v1.0.0 RC 构建、打包与本机回装 Gate 已实现；远端跨平台与公开发布待确认
 > 决策目标：让全新环境能够通过 npm 或独立二进制安装 Self，并在不污染系统、不覆盖已有文件、不依赖特定模型厂商的前提下创建第一个可迁移实例。
 
 ## 1. 这份设计解决什么
@@ -103,7 +103,7 @@ packages/npm-self/
 ```json
 {
   "name": "@helloanner/self",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "A local-first personal knowledge operating system for AI agents",
   "license": "MIT",
   "repository": {
@@ -119,12 +119,12 @@ packages/npm-self/
     "node": ">=20"
   },
   "optionalDependencies": {
-    "@helloanner/self-darwin-arm64": "0.1.0",
-    "@helloanner/self-darwin-x64": "0.1.0",
-    "@helloanner/self-linux-x64": "0.1.0",
-    "@helloanner/self-linux-x64-baseline": "0.1.0",
-    "@helloanner/self-linux-arm64": "0.1.0",
-    "@helloanner/self-windows-x64": "0.1.0"
+    "@helloanner/self-darwin-arm64": "1.0.0",
+    "@helloanner/self-darwin-x64": "1.0.0",
+    "@helloanner/self-linux-x64": "1.0.0",
+    "@helloanner/self-linux-x64-baseline": "1.0.0",
+    "@helloanner/self-linux-arm64": "1.0.0",
+    "@helloanner/self-windows-x64": "1.0.0"
   }
 }
 ```
@@ -412,6 +412,10 @@ npm uninstall --global @helloanner/self
 - 删除实例必须使用 Self 的 Root Delete/Purge Plan；永远不由 npm Uninstall Hook 完成。
 
 ## 15. 发布流水线
+
+Phase 10 当前实现：`bun run release:stage` 从同一次 Build 生成平台目录、Meta/Platform npm tarball、SHA-256 checksums、CycloneDX SBOM、MIT/第三方许可证和 Build Manifest；`bun run release:verify` 在隔离 HOME/TMP 下验证独立二进制、Init/Doctor、Backup/Restore、npm install/同版本 upgrade/uninstall，并确认 CLI 卸载不删除 Workspace Root。darwin-arm64 本机 Gate 已通过。
+
+`.github/workflows/release.yml` 已定义 macOS arm64/x64、Linux arm64/x64 和 Windows x64 Matrix，以及受保护 `release` Environment、GitHub OIDC、Platform Package 先发布、Meta Package 最后发布和 GitHub Release。该工作流尚未在远端实际完成，也未获得本次任务的外部发布授权；因此不得把 RC 产物写成已发布包。
 
 ```text
 Tag / Release PR

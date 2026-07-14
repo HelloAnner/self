@@ -1,6 +1,6 @@
 {
   "name": "@helloanner/self",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "A local-first personal knowledge operating system for AI agents",
   "license": "MIT",
@@ -16,12 +16,12 @@
     "node": ">=20"
   },
   "optionalDependencies": {
-    "@helloanner/self-darwin-arm64": "0.1.0",
-    "@helloanner/self-darwin-x64": "0.1.0",
-    "@helloanner/self-linux-arm64": "0.1.0",
-    "@helloanner/self-linux-x64": "0.1.0",
-    "@helloanner/self-linux-x64-baseline": "0.1.0",
-    "@helloanner/self-windows-x64": "0.1.0"
+    "@helloanner/self-darwin-arm64": "1.0.0",
+    "@helloanner/self-darwin-x64": "1.0.0",
+    "@helloanner/self-linux-arm64": "1.0.0",
+    "@helloanner/self-linux-x64": "1.0.0",
+    "@helloanner/self-linux-x64-baseline": "1.0.0",
+    "@helloanner/self-windows-x64": "1.0.0"
   },
   "files": [
     "bin",

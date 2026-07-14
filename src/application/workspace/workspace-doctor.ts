@@ -1,6 +1,8 @@
 import { loadSelfConfig } from "../../domains/workspace/config/codec.ts";
 import { openSqlite } from "../../infrastructure/db/connection.ts";
+import { verifyMigrationHistory } from "../../infrastructure/db/migrations/runner.ts";
 import { openWorkspaceDatabase } from "../../infrastructure/db/workspace-database.ts";
+import { maintenanceLockStatus } from "../../infrastructure/operations/maintenance-lock.ts";
 import { locateReleaseAssets, locateWorkspaceAssets } from "../../infrastructure/runtime/assets.ts";
 import { VERSION } from "../../shared/version.ts";
 
@@ -100,10 +102,52 @@ export async function doctorWorkspace(root: string): Promise<DoctorResult> {
           version: String(opened.schemaVersion),
           message: integrity?.integrity_check ?? "No integrity result.",
         });
+        const foreignKeys = opened.database
+          .query<Record<string, unknown>, []>("PRAGMA foreign_key_check")
+          .all();
+        checks.push({
+          name: "database-foreign-keys",
+          status: foreignKeys.length === 0 ? "pass" : "blocking",
+          message:
+            foreignKeys.length === 0
+              ? "Foreign-key evidence chains are valid."
+              : `${foreignKeys.length} foreign-key violations detected.`,
+        });
+        const migrationIssues = await verifyMigrationHistory(opened.database);
+        checks.push({
+          name: "migration-history",
+          status: migrationIssues.length === 0 ? "pass" : "blocking",
+          message:
+            migrationIssues.length === 0
+              ? "Applied migration checksums match reviewed migrations."
+              : `${migrationIssues.length} migration history issues detected.`,
+        });
+        const waitingJobs = opened.database
+          .query<{ count: number }, []>(
+            "SELECT COUNT(*) count FROM automation_jobs WHERE state = 'waiting'",
+          )
+          .get()?.count;
+        checks.push({
+          name: "durable-jobs",
+          status: waitingJobs ? "warning" : "pass",
+          message: waitingJobs
+            ? `${waitingJobs} interrupted Jobs are waiting for retry.`
+            : "No interrupted Jobs are waiting.",
+        });
       }
     } finally {
       opened.database.close();
     }
+    const lock = await maintenanceLockStatus(root);
+    checks.push({
+      name: "maintenance-lock",
+      status: lock.exists && !lock.stale ? "warning" : "pass",
+      message: lock.exists
+        ? lock.stale
+          ? "A stale maintenance lock can be recovered safely."
+          : `Maintenance is active for ${lock.purpose ?? "an operation"}.`
+        : "No maintenance lock is active.",
+    });
   } catch (cause) {
     checks.push({
       name: "workspace",

@@ -2,6 +2,8 @@
 
 > 本文给出逻辑 Schema 基线。正式 Migration 需要使用项目统一 ID、时间、审计列和严格表模式，并在真实 SQLite/sqlite-vec 上验证。
 
+> 实现状态：`drizzle/0006_graph_claims.sql` 已落地 Schema 6。实现额外使用 `graph_active_generation` 与三个 `graph_generation_*` 成员表，把稳定对象身份和每代派生视图区分开；这是对下文对象直接携带 Generation 的规范化实现，不改变领域所有权。
+
 ## 1. 表清单与所有权
 
 | 表 | 作用 |
@@ -21,6 +23,8 @@
 | `graph_unresolved_references` | 未解析显式文档链接 |
 | `graph_semantic_neighbors` | 绑定 VectorSpace 的 Top-K 相似投影 |
 | `graph_extraction_runs` | 抽取批次、算法、模型和状态 |
+| `graph_active_generation` | Active/Previous Generation 原子指针 |
+| `graph_generation_nodes` / `graph_generation_relations` / `graph_generation_claims` | 每代成员快照，允许稳定对象跨 Generation 复用 |
 
 这些表都由 Graph 领域唯一写入。Knowledge/Topic 对象只通过稳定 ID 投影，不允许 Graph 修改其权威表。
 

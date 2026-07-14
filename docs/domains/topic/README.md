@@ -1,42 +1,34 @@
 # Topic 领域
 
-> 状态：待详细设计
+> 状态：Phase 7 可信综合、Phase 8 增量 Artifact、Phase 9 安全生命周期与 Phase 10 durable Job 已实现
 
 ## 目标
 
-Topic 把一个长期关注的主题维护成持续生长、跨来源、有证据和可信度的综合报告，而不是一次性搜索结果。
+Topic 把长期关注的主题维护成持续生长、跨来源、有证据和可信度的综合报告，而不是一次性搜索结果。Topic 读取 Retrieval 的证据上下文和 Graph 的 Claim 投影，但不取得它们的写入权。
 
-## 负责范围
+## 已实现边界
 
-- Topic 范围、别名和排除条件
-- Topic 数据水位和增量游标
-- 候选 Claim 聚类、来源独立性判断和覆盖分析
-- 共识、用户观点、AI 推断、争议和未知问题分类
-- 报告大纲、章节和结论组织
-- 章节与整份报告的可信度解释
-- 首次 Build 与后续 Refresh 的内容决策
-- 受新资料或知识变更影响的 stale 判断
+- Topic 范围、别名、排除条件、对象版本和 stale 状态
+- SynthesisRun、不可变 TopicSnapshot、数据水位和父版本
+- 候选 Claim 聚类、局部图谱、来源谱系去重和转载折叠
+- 多源共识、单一来源、用户观点、AI 推断、冲突和未知分类
+- ReportOutline、ReportSection、Conclusion、Citation 和 KnowledgeGap
+- 章节/报告可信度、覆盖度、健康状态及解释
+- 首次完整 topic build、历史版本、指定 Snapshot 报告读取和 Section Trace
+- Knowledge/Graph 变化后的 stale 与 Claim 审核后的 needs_review
+- Source/Graph/Claim 变化的精确依赖失效，以及 Topic/绑定 Artifact 的 Plan delete/restore 和 Operation 审计
+- Build/Refresh 通过 Schema 11 durable Job 提供 detach/wait、checkpoint、取消和 retry
 
-## 核心对象
+## 详细设计
 
-- `Topic`：主题身份、边界和生命周期
-- `TopicScope`：包含、排除和时间范围
-- `SynthesisRun`：一次完整或增量综合
-- `TopicSnapshot`：本次报告使用的知识快照
-- `ReportOutline`：章节结构和关键问题
-- `ReportSection`：带 Claim、引用和可信度的章节
-- `KnowledgeGap`：明确记录的未知问题
-
-## 关键不变量
-
-- 报告必须区分事实、用户观点和 AI 推断。
-- 未知和冲突不得为了行文完整而被隐藏。
-- 每个关键结论必须能回到 Claim 和 Chunk。
-- Refresh 必须记录相对父版本的新增、修改、失效和冲突。
-- Topic 内容版本不可原地覆盖。
+- [model.md](./model.md)：聚合、状态、结论类型、可信度和不变量
+- [schema.md](./schema.md)：Schema 8 表、索引、不可变触发器和事务
+- [workflows.md](./workflows.md)：首次 Build、版本构建、失效和恢复
+- [commands.md](./commands.md)：Phase 7 CLI 契约与错误语义
+- [testing.md](./testing.md)：单元、真实 CLI、真实 Vault 和性能 Gate
 
 ## 不负责
 
-- HTML、CSS 和页面组件渲染
-- 底层检索算法实现
-- Claim 的最终所有权
+- HTML、CSS、Page IR 和 Artifact Build
+- 底层检索算法与 Claim 所有权
+- MCP/HTTP 等 Phase 11 外部 Agent 入口

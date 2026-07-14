@@ -13,3 +13,5 @@ Chunk → RevisionChunk → Revision → SnapshotEntry → Blob → Source
 ```
 
 `Note` 是 Root `content/notes/` 中可人工编辑的 Markdown，SQLite 保存 Note ID、Source/Document 映射和乐观版本。每次更新先写 ManagedWriteReceipt，再原子写文件、归档 Snapshot 并发布 Revision；陈旧 `--if-version` 必须冲突且不得改文件。
+
+Phase 4 增加两个可重建投影：FTS `IndexGeneration` 与不可变 `VectorSpace`。FTS active pointer 和 VectorSpace active pointer 都只指向完整 ready 对象；shadow build 期间旧指针继续服务。每个 Embedding 同时绑定 VectorSpace、Chunk content Hash、输入 Hash 和向量 Hash。

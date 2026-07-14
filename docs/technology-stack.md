@@ -3,6 +3,7 @@
 > 状态：初始技术基线
 > 决策日期：2026-07-11
 > 核心选择：TypeScript 7 + Bun 1.3.14 + SQLite + sqlite-vec + 模块化单体
+> 当前实现：Phase 10 主体 / CLI v1.0.0 / Schema 11；持久化 Job、备份和维护状态仍使用同一 SQLite 和同一模块化单体，不引入外部队列或状态服务。
 
 > 模型职责、千问 Embedding 建议、维度与 VectorSpace 迁移以 [`model-selection.md`](./model-selection.md) 为准；本文只定义模型接入组件和配置形态。
 > npm 平台包、全新环境和 `self --init` 以 [`distribution.md`](./distribution.md) 与 Workspace Initialization 为准。
@@ -20,8 +21,8 @@ TypeScript 7
    ├── SQLite FTS5 + sqlite-vec     全文与向量检索
    ├── Vercel AI SDK                模型 Provider 适配
    ├── unified / remark / rehype    Markdown 解析
-   ├── React + Bun.build            Page IR 与静态 HTML
-   ├── ECharts + Cytoscape.js       图表与知识图谱
+   ├── React + native SVG           Page IR、静态 HTML 与 MVP 图形
+   ├── ECharts + Cytoscape.js       大规模交互图形的后续可选渲染器
    └── bun:test + Playwright        自动化测试
 ```
 
@@ -257,11 +258,11 @@ MCP、HTTP API 和 Obsidian 插件都调用 Application 层，不复制业务逻
 | 日志 | Pino | 只写 JSON 日志；CLI 展示由 Presenter 单独负责 |
 | 后台任务 | SQLite Job 表 + Bun Worker | 不引入 Redis/BullMQ；单写者协调数据库提交 |
 | HTML | React server render + Bun.build | Page IR 编译为可归档静态页面 |
-| 图表 | ECharts | 通用数据图和时间线 |
+| 图表 | 原生 HTML/CSS/SVG；ECharts 后续可选 | MVP 的时间线、可信度和对比无需脚本运行时；复杂交互需求通过 Gate 后再引入 |
 | 图谱权威存储 | SQLite 邻接表 + Recursive CTE | 与主数据库同文件；普通索引完成邻居和有界路径查询 |
 | 语义近邻投影 | sqlite-vec + Graph 投影表 | 绑定 VectorSpace 的可重建 Top-K，不当作事实边 |
 | 图谱交换 | JSON-LD + GraphML | 仅用于互操作导出，不代替 SQLite 事实源 |
-| 图谱可视化 | Cytoscape.js | 消费局部 Subgraph/Page IR，不直接承担存储 |
+| 图谱可视化 | 有限原生 SVG；Cytoscape.js 后续可选 | MVP 消费有限局部 Subgraph/Page IR；两者都不承担存储 |
 | 单元测试 | bun:test | 与 Runtime 同工具链 |
 | 属性测试 | fast-check | 验证幂等、重建等价和领域不变量 |
 | HTML 测试 | Playwright | DOM、离线、交互和截图 |
@@ -719,7 +720,7 @@ self-release-<os>-<arch>/
 - TypeScript patch：运行 typecheck 和全部契约测试。
 - Drizzle/sqlite-vec：单独 PR，附 Migration 与全量重建等价测试。
 - AI SDK/Provider：验证结构化输出、Embedding 和 Recorded/Live Suite。
-- React/ECharts/Cytoscape：验证历史 Page IR、离线 HTML 和视觉回归。
+- React/原生 SVG：验证历史 Page IR、离线 HTML 和视觉回归；若引入 ECharts/Cytoscape，同样必须通过这些 Gate，并验证归档资源无远程依赖。
 - Major 版本：先写 ADR，再升级，不在功能 PR 中顺带完成。
 
 ### 13.3 为什么不用 `latest`

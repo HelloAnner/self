@@ -14,12 +14,17 @@ import {
   recordIngestionOperation,
   replaceEntryResults,
 } from "../../infrastructure/ingestion/ingestion-repository.ts";
+import { syncFtsForSource } from "../../infrastructure/knowledge/fts-index.ts";
 import { publishKnowledgeSnapshot } from "../../infrastructure/knowledge/knowledge-publisher.ts";
 import { publicationForRun } from "../../infrastructure/knowledge/knowledge-reader.ts";
 import { parseSnapshotEntry } from "../../infrastructure/parsers/parser-router.ts";
+import { invalidateActiveAnswers } from "../../infrastructure/retrieval/evidence-repository.ts";
 import { getSnapshotEntries, getSource } from "../../infrastructure/source/source-reader.ts";
+import { invalidateActiveTopics } from "../../infrastructure/topic/topic-invalidation.ts";
 import { failure, SelfFailure } from "../../shared/errors/self-error.ts";
 import { createResourceId } from "../../shared/ids/id.ts";
+import { refreshActiveGraphAfterKnowledgeChange } from "../graph/graph-build.ts";
+import { refreshActiveVectorSpace } from "../knowledge/vector-space-workflows.ts";
 
 export async function ingestSnapshot(
   root: string,
@@ -107,12 +112,20 @@ export async function ingestSnapshot(
       renames: await getSnapshotRenames(root, input.snapshotId),
     });
     await input.afterCheckpoint?.("after_knowledge_publish");
+    await syncFtsForSource(root, input.sourceId);
+    await invalidateActiveAnswers(root, `knowledge_changed:${input.sourceId}`);
+    await invalidateActiveTopics(root, `knowledge_changed:${input.sourceId}`);
+    const vectorProjection = await refreshActiveVectorSpace(root, {
+      sourceId: input.sourceId,
+      allowDegraded: true,
+    });
     await completeIngestionRun(root, runId, {
       documents: publication.documents_published,
       chunksPublished: publication.chunks_published,
       chunksReused: publication.chunks_reused,
       chunksTombstoned: publication.chunks_tombstoned,
     });
+    const graphProjection = await refreshGraphSafely(root);
     const operationId = await operation(root, requestId, runId, "knowledge.build", publication);
     return {
       operation_id: operationId,
@@ -121,6 +134,8 @@ export async function ingestSnapshot(
       snapshot_id: input.snapshotId,
       ingestion_status: "ready" as const,
       reused_run: false,
+      vector_projection: vectorProjection,
+      graph_projection: graphProjection,
       ...publication,
     };
   } catch (cause) {
@@ -155,6 +170,12 @@ async function readyResult(
   requestId: string,
   reused: boolean,
 ) {
+  await syncFtsForSource(root, sourceId);
+  const vectorProjection = await refreshActiveVectorSpace(root, {
+    sourceId,
+    allowDegraded: true,
+  });
+  const graphProjection = await refreshGraphSafely(root);
   const publication = await publicationForRun(root, runId);
   const result = {
     ingestion_run_id: runId,
@@ -162,10 +183,24 @@ async function readyResult(
     snapshot_id: snapshotId,
     ingestion_status: "ready" as const,
     reused_run: reused,
+    vector_projection: vectorProjection,
+    graph_projection: graphProjection,
     documents: publication.documents,
   };
   const operationId = await operation(root, requestId, runId, "knowledge.build.reused", result);
   return { operation_id: operationId, ...result };
+}
+
+async function refreshGraphSafely(root: string) {
+  try {
+    return await refreshActiveGraphAfterKnowledgeChange(root);
+  } catch (cause) {
+    return {
+      graph_status: "degraded",
+      error_code:
+        cause instanceof SelfFailure ? cause.selfError.code : "graph_incremental_refresh_failed",
+    };
+  }
 }
 
 async function operation(

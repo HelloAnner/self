@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { atomicWrite } from "../../infrastructure/filesystem/atomic-write.ts";
 import { sha256Text } from "../../infrastructure/filesystem/hash.ts";
 import {
   getSnapshotEntries,
@@ -7,9 +6,8 @@ import {
   getSourceSnapshotSummary,
   listSources,
 } from "../../infrastructure/source/source-reader.ts";
-import { restoreSource, softDeleteSource } from "../../infrastructure/source/source-store.ts";
+import { softDeleteSource } from "../../infrastructure/source/source-store.ts";
 import { failure } from "../../shared/errors/self-error.ts";
-import { createResourceId } from "../../shared/ids/id.ts";
 import { initPlanPath } from "../workspace/init-plan.ts";
 
 const deletePlanSchema = z.object({
@@ -39,25 +37,40 @@ export async function sourceFiles(root: string, sourceId: string, snapshotId?: s
   return getSnapshotEntries(root, sourceId, snapshotId);
 }
 
-export async function createSourceDeletePlan(root: string, sourceId: string, requestId: string) {
-  const source = await getSource(root, sourceId);
-  if (source.state === "deleted")
-    throw failure("source_deleted", "Source is already deleted", "state");
-  const now = new Date();
-  const plan = deletePlanSchema.parse({
-    plan_id: createResourceId("plan"),
-    kind: "source.delete",
-    source_id: sourceId,
-    source_version: source.version,
-    current_snapshot_id: source.current_snapshot_id,
-    operation_id: createResourceId("operation"),
-    request_id: requestId,
+export async function createSourceDeletePlan(
+  root: string,
+  sourceId: string,
+  requestId: string,
+  idempotencyKey?: string,
+) {
+  const { createSafetyPlan } = await import("../automation/plan-workflows.ts");
+  return createSafetyPlan(
     root,
-    created_at: now.toISOString(),
-    expires_at: new Date(now.getTime() + 15 * 60_000).toISOString(),
-  });
-  await atomicWrite(initPlanPath(root, plan.plan_id), `${JSON.stringify(plan, null, 2)}\n`);
-  return plan;
+    {
+      action: "source_delete",
+      resourceId: sourceId,
+      ...(idempotencyKey ? { idempotencyKey } : {}),
+    },
+    requestId,
+  );
+}
+
+export async function createSourcePurgePlan(
+  root: string,
+  sourceId: string,
+  requestId: string,
+  idempotencyKey?: string,
+) {
+  const { createSafetyPlan } = await import("../automation/plan-workflows.ts");
+  return createSafetyPlan(
+    root,
+    {
+      action: "source_purge",
+      resourceId: sourceId,
+      ...(idempotencyKey ? { idempotencyKey } : {}),
+    },
+    requestId,
+  );
 }
 
 export async function applySourceDeletePlan(root: string, planId: string) {
@@ -88,17 +101,14 @@ export async function applySourceDeletePlan(root: string, planId: string) {
   return { operation_id: plan.operation_id, source_id: plan.source_id, state: "deleted" as const };
 }
 
-export async function restoreDeletedSource(root: string, sourceId: string, requestId: string) {
-  const now = new Date().toISOString();
-  const operationId = createResourceId("operation");
-  await restoreSource(root, sourceId, {
-    operationId,
-    requestId,
-    kind: "source.restore",
-    inputHash: sha256Text(sourceId),
-    now,
-  });
-  return { operation_id: operationId, source_id: sourceId, state: "active" as const };
+export async function restoreDeletedSource(
+  root: string,
+  sourceId: string,
+  requestId: string,
+  options: { ifVersion?: number; idempotencyKey?: string } = {},
+) {
+  const { restoreDeletedResource } = await import("../automation/restore-workflows.ts");
+  return restoreDeletedResource(root, "source", sourceId, requestId, options);
 }
 
 function sourceDto(source: Awaited<ReturnType<typeof getSource>>) {

@@ -588,6 +588,8 @@ POST https://dashscope.aliyuncs.com/api/v1/services/embeddings/
 | `vision` | `qwen3-vl-plus-2025-12-19` | 图表、复杂页面理解 |
 | `ocr` | `qwen3.5-ocr` | 先记录浮动实际版本；稳定后改用快照 |
 
+2026-07-14 Phase 10 RC 的忽略提交 `data/` Registry 已注册 `qwen3.7-plus-2026-05-26`（chat）和 `text-embedding-v4@1024`（embedding），两者共用 DashScope Provider 与 `SELF_DASHSCOPE_API_KEY` 环境变量引用。视觉基线仍选 `qwen3-vl-plus-2025-12-19`，但当前公开 CLI 只接受 `chat|embedding` capability，图片 Parser/vision Route 尚未形成可发布的全量摄入闭环，因此没有把视觉模型伪装成已注册能力。本轮环境变量未设置，未新增计费调用；上文“实际通过”来自此前保留的 Live Suite 证据。
+
 Provider Registry 只保存 Base URL 和环境变量名：
 
 ```toml

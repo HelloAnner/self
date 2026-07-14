@@ -11,9 +11,11 @@ Connection 使用两个顶层资源：
 
 ### 当前实现边界
 
-当前已实现并进入机器可发现契约的命令是：`add/list/show/status/events/changes/watch/scan/pause/resume/retry/rebind` 和 `daemon run/start/status/stop/restart/logs`。`source add --watch` 复用同一 Application Workflow；绑定 Connection 的 `source sync` 会委托给权威 reconciliation。本文其余 `update/batch/detach/delete/restore/failures/verify/explain/daemon install` 命令保留为后续 Roadmap 契约，未注册的命令不得被文档状态误解为已经可用。
+当前已实现并进入机器可发现契约的命令是：`add/list/show/status/events/changes/watch/scan/pause/resume/retry/rebind/detach/restore` 和 `daemon run/start/status/stop/restart/logs`。`source add --watch` 复用同一 Application Workflow；绑定 Connection 的 `source sync` 会委托给权威 reconciliation。`update/batch/delete/failures/verify/explain/daemon install` 仍是后续 Roadmap 契约，未注册命令不得被误解为可用。
 
 Phase 3 已建立 Ingestion/Knowledge 状态机。初始扫描或后续 reconciliation 接纳 ChangeBatch 后，会同步完成 Source 归档与 Knowledge 发布；返回真实 `ingestion_run_id`/`ingestion_status`，ChangeItem 只有在发布成功后才成为 `ingested`。当前仍未引入独立后台 Job，因此兼容字段 `job_id` 保持 `null`，不能把它解读为摄入未执行。
+
+Phase 9 中 `connection detach <id> --plan` 进入通用 Plan/Apply，固定 revision/state 并保留 Target、Observation、Scan 与 Change 历史；`connection restore` 从删除 Operation 的 before image 恢复同一 Connection ID，支持 `--if-version` 和 `--idempotency-key`。Detach 不等同于 Source Delete。
 
 ## 2. 创建 Connection
 
@@ -108,6 +110,8 @@ self source add ~/project/docs --kind directory --watch
 返回值必须同时包含 `source_id`、`connection_id`、`scan_run_id`、`job_id` 和摄入状态；当前同步执行摄入，`job_id` 明确为 `null`，真实执行身份由 `ingestion_run_id` 表示。
 
 `source add --watch` 与 `snapshot` 模式冲突。外部路径默认切换为 `mirror`；`import --watch` 则监控迁入后的 `content/notes/` 等 managed-content 路径，而不是继续依赖原始外部位置。
+
+单次 authoritative scan 变化超过 `max_batch_size` 时必须按规范路径顺序拆成多个 ChangeBatch，同一 Scan 共享最终 Snapshot/Ingestion 投影；不能因真实 Vault 较大直接失败。普通 JSON 返回最多内联 100 个 change，另给出 `changes_total`、`changes_truncated` 和完整 `change_batch_ids`，避免一次序列化数千路径。
 
 成功创建 active Connection 后，命令默认确保当前 Root 的 Daemon 正在运行。`--no-daemon` 只用于容器、调试或由外部进程管理器启动 `daemon run` 的场景；命令必须返回连接尚未被后台调度的 warning。
 
@@ -253,6 +257,8 @@ self connection restore connection:con_123
 ```
 
 Connection 不提供直接 purge Source 数据的能力。永久删除证据仍使用 `source purge`，避免停止监控时误删知识。
+
+Phase 9 的 detach 使用通用 immutable Plan，Apply 只把 Connection 置为 `detached` 并递增 revision，Source、Snapshot、Document 和历史事件不变化。Restore 反向应用该 OperationChange；`--if-version` 和 `--idempotency-key` 可用于并发与重试控制。Connection delete 仍未注册，不能用 detach 冒充软删除。
 
 ## 10. 错误与重试
 

@@ -94,6 +94,16 @@ export async function applyDatabaseMigrationPlan(rootInput: string, planId: stri
     database.close();
   }
 
+  if (process.env.SELF_TEST_FAIL_MIGRATION_BEFORE_SWAP === "1") {
+    await rm(temporary, { force: true });
+    throw failure(
+      "migration_fault_injected",
+      "Migration fault was injected before the atomic database swap",
+      "internal",
+      { retryable: true },
+    );
+  }
+
   const migrated = new Uint8Array(await Bun.file(temporary).arrayBuffer());
   const databasePath = join(root, "data/self.sqlite3");
   await rm(`${databasePath}-wal`, { force: true });

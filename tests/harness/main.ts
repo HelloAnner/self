@@ -27,7 +27,7 @@ const result = Bun.spawnSync([executable, "version", "--json"], {
 if (result.exitCode !== 0) throw new Error(result.stderr.toString());
 
 const envelope = JSON.parse(result.stdout.toString());
-if (!envelope.ok || envelope.data.cli_version !== "0.1.0") {
+if (!envelope.ok || envelope.data.cli_version !== "1.0.0") {
   throw new Error("Packaged CLI returned an invalid version envelope");
 }
 if ((await readdir(noWriteRoot)).length !== 0) {

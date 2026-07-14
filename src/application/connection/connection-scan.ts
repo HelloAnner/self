@@ -12,6 +12,7 @@ import {
 import { buildInventory } from "../../infrastructure/connection/inventory.ts";
 import { consumeManagedWriteReceipts } from "../../infrastructure/connection/managed-write-repository.ts";
 import { verifyConnectionTarget } from "../../infrastructure/connection/target.ts";
+import { recordSourceBatchReceipt } from "../../infrastructure/source/source-store.ts";
 import { failure, SelfFailure } from "../../shared/errors/self-error.ts";
 import { acceptSourceChangeBatch } from "../source/source-archive.ts";
 
@@ -73,26 +74,35 @@ export async function scanConnection(
         inventory.ignored.length,
         classification.changes,
       );
-      return scanResult(scanId, null, null, inventory, classification.changes, true);
+      return scanResult(scanId, [], null, inventory, classification.changes, true);
     }
-    if (classification.changes.length > connection.resource_policy.max_batch_size) {
-      throw failure(
-        "connection_batch_too_large",
-        "Scan changes exceed the configured batch limit",
-        "state",
-        {
-          details: {
-            changes: classification.changes.length,
-            limit: connection.resource_policy.max_batch_size,
-          },
-        },
+    const batches = [] as Array<{ batchId: string; reused: boolean }>;
+    for (
+      let offset = 0;
+      offset < classification.changes.length;
+      offset += connection.resource_policy.max_batch_size
+    ) {
+      const batch = await persistDetectedBatch(
+        root,
+        connectionId,
+        scanId,
+        classification.changes.slice(offset, offset + connection.resource_policy.max_batch_size),
       );
+      if (batch) batches.push(batch);
     }
-    const batch = await persistDetectedBatch(root, connectionId, scanId, classification.changes);
-    if (batch) await options.afterCheckpoint?.("after_batch_persist");
-    const archived = batch
-      ? await acceptSourceChangeBatch(root, connection.source_id, batch.batchId, requestId)
+    if (batches.length > 0) await options.afterCheckpoint?.("after_batch_persist");
+    const firstBatch = batches[0];
+    const archived = firstBatch
+      ? await acceptSourceChangeBatch(root, connection.source_id, firstBatch.batchId, requestId)
       : null;
+    if (archived)
+      for (const batch of batches.slice(1))
+        await recordSourceBatchReceipt(
+          root,
+          batch.batchId,
+          connection.source_id,
+          archived.snapshot_id,
+        );
     await completeScan(root, {
       connection,
       target,
@@ -101,7 +111,7 @@ export async function scanConnection(
       previous,
       missingPending: classification.missing_pending,
       changes: classification.changes,
-      batchId: batch?.batchId ?? null,
+      batchIds: batches.map((batch) => batch.batchId),
       snapshotId: archived?.snapshot_id ?? null,
       filesHashed: inventory.files_hashed,
       filesIgnored: inventory.ignored.length,
@@ -110,7 +120,7 @@ export async function scanConnection(
     });
     return scanResult(
       scanId,
-      batch?.batchId ?? null,
+      batches.map((batch) => batch.batchId),
       archived?.snapshot_id ?? null,
       inventory,
       classification.changes,
@@ -125,7 +135,7 @@ export async function scanConnection(
 
 function scanResult(
   scanId: string,
-  batchId: string | null,
+  batchIds: string[],
   snapshotId: string | null,
   inventory: Awaited<ReturnType<typeof buildInventory>>,
   changes: ReturnType<typeof classifyChanges>["changes"],
@@ -133,7 +143,8 @@ function scanResult(
 ) {
   return {
     scan_run_id: scanId,
-    change_batch_id: batchId,
+    change_batch_id: batchIds[0] ?? null,
+    change_batch_ids: batchIds,
     snapshot_id: snapshotId,
     state: "succeeded" as const,
     dry_run: dryRun,
@@ -146,7 +157,9 @@ function scanResult(
     deleted: changes.filter((item) => item.kind === "deleted").length,
     renamed: changes.filter((item) => item.kind === "renamed").length,
     restored: changes.filter((item) => item.kind === "restored").length,
-    changes,
+    changes_total: changes.length,
+    changes_truncated: changes.length > 100,
+    changes: changes.slice(0, 100),
   };
 }
 

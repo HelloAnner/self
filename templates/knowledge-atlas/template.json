@@ -1,0 +1,8 @@
+{
+  "id": "knowledge-atlas",
+  "display_name": "Knowledge Atlas",
+  "version": "1.0.0",
+  "page_ir_version": 1,
+  "renderer_version": "knowledge-atlas-react-v1",
+  "default_theme": "self-light"
+}

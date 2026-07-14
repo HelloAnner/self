@@ -9,6 +9,7 @@
     "verbatimModuleSyntax": true,
     "resolveJsonModule": true,
     "types": ["bun"],
+    "jsx": "react-jsx",
     "noEmit": true,
     "strict": true,
     "noUncheckedIndexedAccess": true,

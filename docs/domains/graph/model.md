@@ -107,6 +107,8 @@ generation_id
 
 `qualifier_hash` 来自规范化限定信息，例如角色、作用域、条件、单位、版本和地域。相同三元组在不同时间或条件下可以并存，不能只用 subject/predicate/object 粗暴去重。
 
+规则自动判定两个不同 object/value 互斥时，还要求双方具有相同且非空的 qualifiers.conflict_scope。它表达“这些位置属于同一个单选问题”，防止把 uses、has_part 等正常多值关系误判为冲突。没有该限定时，模型只能提出候选或由用户确认，不能仅依据 object 不同创建 ConflictSet。
+
 ### 4.1 Origin
 
 | `origin` | 产生方式 | 默认可信状态 |

@@ -26,13 +26,19 @@ export function registerNoteCommands(program: Command): void {
     .requiredOption("--content <text>")
     .requiredOption("--if-version <version>")
     .option("--title <title>")
+    .option("--idempotency-key <key>")
     .option("--json");
   update.action((noteId: string) =>
     runCliAction({
       command: update,
       root: "required",
       handler: async ({ root, requestId }) => {
-        const options = update.opts<{ content: string; ifVersion: string; title?: string }>();
+        const options = update.opts<{
+          content: string;
+          ifVersion: string;
+          title?: string;
+          idempotencyKey?: string;
+        }>();
         const version = Number(options.ifVersion);
         if (!Number.isInteger(version) || version < 1) {
           throw failure("note_input_invalid", "--if-version must be a positive integer", "usage");
@@ -45,6 +51,7 @@ export function registerNoteCommands(program: Command): void {
             content: options.content,
             ifVersion: version,
             ...(options.title ? { title: options.title } : {}),
+            ...(options.idempotencyKey ? { idempotencyKey: options.idempotencyKey } : {}),
           },
           requestId,
         );
@@ -56,6 +63,77 @@ export function registerNoteCommands(program: Command): void {
   list.action(() => noteQuery(list, "list"));
   const show = note.command("show <note-id>").option("--json");
   show.action((noteId: string) => noteQuery(show, "show", noteId));
+  const move = note
+    .command("move <note-id>")
+    .requiredOption("--to <directory>")
+    .requiredOption("--plan")
+    .option("--idempotency-key <key>")
+    .option("--json");
+  move.action((noteId: string) =>
+    mutation(move, "note_move", noteId, {
+      to: move.opts<{ to: string }>().to,
+    }),
+  );
+  const remove = note
+    .command("delete <note-id>")
+    .requiredOption("--plan")
+    .option("--idempotency-key <key>")
+    .option("--json");
+  remove.action((noteId: string) => mutation(remove, "note_delete", noteId));
+  const restore = note
+    .command("restore <note-id>")
+    .option("--if-version <version>")
+    .option("--idempotency-key <key>")
+    .option("--json");
+  restore.action((noteId: string) =>
+    runCliAction({
+      command: restore,
+      root: "required",
+      handler: async ({ root, requestId }) => {
+        const options = restore.opts<{ ifVersion?: string; idempotencyKey?: string }>();
+        const ifVersion = options.ifVersion ? positiveVersion(options.ifVersion) : undefined;
+        const { restoreDeletedResource } = await import(
+          "../../application/automation/resource-lifecycle.ts"
+        );
+        return restoreDeletedResource(root ?? "", "note", noteId, requestId, {
+          ...(ifVersion !== undefined ? { ifVersion } : {}),
+          ...(options.idempotencyKey ? { idempotencyKey: options.idempotencyKey } : {}),
+        });
+      },
+      present: presentKeyValues,
+    }),
+  );
+}
+
+function mutation(
+  command: Command,
+  action: "note_move" | "note_delete",
+  noteId: string,
+  values?: Record<string, unknown>,
+) {
+  return runCliAction({
+    command,
+    root: "required",
+    handler: async ({ root, requestId }) => {
+      const idempotencyKey = command.opts<{ idempotencyKey?: string }>().idempotencyKey;
+      const { createResourceMutationPlan } = await import(
+        "../../application/automation/resource-lifecycle.ts"
+      );
+      return createResourceMutationPlan(root ?? "", action, noteId, requestId, {
+        ...(values ? { values } : {}),
+        ...(idempotencyKey ? { idempotencyKey } : {}),
+      });
+    },
+    present: presentKeyValues,
+  });
+}
+
+function positiveVersion(value: string): number {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    throw failure("note_input_invalid", "--if-version must be a positive integer", "usage");
+  }
+  return parsed;
 }
 
 function noteQuery(command: Command, action: "list" | "show", noteId?: string) {

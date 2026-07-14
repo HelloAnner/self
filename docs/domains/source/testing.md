@@ -1,6 +1,6 @@
 # Source 测试矩阵
 
-> 状态：Phase 2 归档 gate 与 Phase 3 默认摄入回归通过
+> 状态：Phase 2 归档、Phase 3 默认摄入与 Phase 9 安全生命周期 gate 通过
 
 全部测试使用 `data/test-runs/phase-2-real-cli/` 内的隔离 Root 和合成输入，不读取用户真实 Vault。
 
@@ -20,3 +20,10 @@
 - Schema 1 → 2 使用显式 Plan/Apply 并保留 Root 内迁移备份。
 
 性能记录至少包含小型目录首次归档和无变化 Sync；Phase 2 不以提高阈值隐藏文件 Hash 或 SQLite 回归。
+
+## Phase 9 安全生命周期
+
+- Delete Plan 固化 Source version/current Snapshot 和 Connection、Document、Chunk、Graph Evidence、EvidenceContext、Answer、Topic、Artifact 的精确影响 Hash；Plan 后任一 before image 漂移都拒绝 Apply。
+- Delete/Restore 保留 Source、Snapshot、Blob、Document、Revision、Chunk 和下游稳定 ID；Restore 从不可变 OperationChange 恢复原状态并只递增当前对象版本。
+- Purge 只接受已 deleted 且 Connection、Note、Ingestion、Document、Context、Topic Citation、Graph 引用均为零的 Source；有任一引用返回 `source_purge_blocked`，成功后只留 Hash-only Receipt。
+- 相同 Plan 重试和相同幂等键不产生第二次业务效果；AuditEvent/OperationChange 拒绝 UPDATE/DELETE。

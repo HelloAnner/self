@@ -36,5 +36,24 @@ describe("machine-readable command contracts", () => {
       required: ["root", "source_id", "plan"],
       properties: { plan: { const: true } },
     });
+    expect(commandSchema("vector-space.activate")).toMatchObject({
+      required: ["root", "vector_space_id", "plan"],
+      properties: { plan: { const: true } },
+    });
+    expect(commandSchema("vector-space.migrate")).toMatchObject({
+      properties: { from_local_chunks: { const: true }, plan: { const: true } },
+    });
+    expect(commandSchema("graph.activate")).toMatchObject({
+      required: ["root", "generation_id", "plan"],
+      properties: { plan: { const: true } },
+    });
+    expect(commandSchema("entity.merge")).toMatchObject({
+      required: ["root", "source_id", "target_id", "plan"],
+      properties: { plan: { const: true } },
+    });
+    expect(commandSchema("relation.create")).toMatchObject({
+      required: ["root", "subject_id", "predicate", "object_id", "plan"],
+      properties: { plan: { const: true } },
+    });
   });
 });

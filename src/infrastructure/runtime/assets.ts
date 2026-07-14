@@ -85,6 +85,8 @@ async function locateDevelopmentSqlite(): Promise<string | undefined> {
     "/opt/homebrew/opt/sqlite/lib/libsqlite3.dylib",
     "/usr/local/opt/sqlite/lib/libsqlite3.dylib",
     process.platform === "linux" ? "/usr/lib/x86_64-linux-gnu/libsqlite3.so.0" : undefined,
+    process.platform === "linux" ? "/usr/lib/aarch64-linux-gnu/libsqlite3.so.0" : undefined,
+    process.platform === "linux" ? "/usr/lib/arm-linux-gnueabihf/libsqlite3.so.0" : undefined,
   ].filter((value): value is string => Boolean(value));
   for (const candidate of candidates) if (await Bun.file(candidate).exists()) return candidate;
   return undefined;

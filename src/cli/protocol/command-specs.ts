@@ -1,5 +1,11 @@
+import { ARTIFACT_COMMAND_SPECS, ARTIFACT_INPUT_SCHEMAS } from "./artifact-command-specs.ts";
+import { AUTOMATION_COMMAND_SPECS, AUTOMATION_INPUT_SCHEMAS } from "./automation-command-specs.ts";
 import { CONNECTION_COMMAND_SPECS, CONNECTION_INPUT_SCHEMAS } from "./connection-command-specs.ts";
+import { GRAPH_COMMAND_SPECS, GRAPH_INPUT_SCHEMAS } from "./graph-command-specs.ts";
 import { KNOWLEDGE_COMMAND_SPECS, KNOWLEDGE_INPUT_SCHEMAS } from "./knowledge-command-specs.ts";
+import { RETRIEVAL_COMMAND_SPECS, RETRIEVAL_INPUT_SCHEMAS } from "./retrieval-command-specs.ts";
+import { SEARCH_COMMAND_SPECS, SEARCH_INPUT_SCHEMAS } from "./search-command-specs.ts";
+import { TOPIC_COMMAND_SPECS, TOPIC_INPUT_SCHEMAS } from "./topic-command-specs.ts";
 
 export type CommandSpec = {
   id: string;
@@ -23,6 +29,10 @@ const object = (
 });
 
 const INPUT_SCHEMAS: Record<string, JsonSchema> = {
+  ...RETRIEVAL_INPUT_SCHEMAS,
+  ...TOPIC_INPUT_SCHEMAS,
+  ...ARTIFACT_INPUT_SCHEMAS,
+  ...AUTOMATION_INPUT_SCHEMAS,
   version: object({ json: boolean("Emit a JSON envelope") }),
   commands: object({ json: boolean("Emit a JSON envelope") }),
   "schema.command": object(
@@ -231,11 +241,31 @@ const INPUT_SCHEMAS: Record<string, JsonSchema> = {
       root: string("Workspace Root"),
       source_id: string("Source public ID"),
       plan: { const: true, description: "Required safety acknowledgement" },
+      idempotency_key: string("Retry-stable idempotency key"),
       json: boolean("Emit JSON"),
     },
     ["root", "source_id", "plan"],
   ),
-  "source.restore": sourceIdSchema(),
+  "source.purge": object(
+    {
+      root: string("Workspace Root"),
+      source_id: string("Source public ID"),
+      plan: { const: true, description: "Required safety acknowledgement" },
+      idempotency_key: string("Retry-stable idempotency key"),
+      json: boolean("Emit JSON"),
+    },
+    ["root", "source_id", "plan"],
+  ),
+  "source.restore": object(
+    {
+      root: string("Workspace Root"),
+      source_id: string("Source public ID"),
+      if_version: string("Expected deleted Source version"),
+      idempotency_key: string("Retry-stable idempotency key"),
+      json: boolean("Emit JSON"),
+    },
+    ["root", "source_id"],
+  ),
 };
 
 export const COMMAND_SPECS: CommandSpec[] = [
@@ -383,8 +413,20 @@ export const COMMAND_SPECS: CommandSpec[] = [
     root: "required",
     execution: "write",
   },
+  {
+    id: "source.purge",
+    summary: "Plan irreversible Source evidence purge",
+    root: "required",
+    execution: "plan",
+  },
+  ...AUTOMATION_COMMAND_SPECS,
   ...CONNECTION_COMMAND_SPECS,
   ...KNOWLEDGE_COMMAND_SPECS,
+  ...SEARCH_COMMAND_SPECS,
+  ...GRAPH_COMMAND_SPECS,
+  ...RETRIEVAL_COMMAND_SPECS,
+  ...TOPIC_COMMAND_SPECS,
+  ...ARTIFACT_COMMAND_SPECS,
 ];
 
 export function commandSchema(id: string): Record<string, unknown> | undefined {
@@ -399,6 +441,9 @@ export function commandSchema(id: string): Record<string, unknown> | undefined {
     ...(INPUT_SCHEMAS[id] ??
       CONNECTION_INPUT_SCHEMAS[id] ??
       KNOWLEDGE_INPUT_SCHEMAS[id] ??
+      SEARCH_INPUT_SCHEMAS[id] ??
+      GRAPH_INPUT_SCHEMAS[id] ??
+      TOPIC_INPUT_SCHEMAS[id] ??
       object()),
   };
 }

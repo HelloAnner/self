@@ -580,6 +580,8 @@ Benchmark 写入 `.test-runs/` 或 Root 内显式 performance 目录，不污染
 - 24h Daemon、索引和查询并发长稳通过。
 - 性能 Trace、慢日志和诊断命令可用。
 
+2026-07-14 Phase 10 RC 实测（本机 darwin-arm64、真实 `~/notes` 的忽略提交 Workspace）：Connection dry-run 1.63s，Deep Verify 31.18s，324,386,563-byte / 3,241-file Backup 校验 1.61s，新 Root Restore 与恢复前 Deep Verify 33.17s，恢复后 text search 91.31ms。该结果证明真实恢复路径可用，不替代固定 Runner 的 Medium/Large p50/p95 趋势和 24h 并发长稳；后两项仍是公开发布 Gate。
+
 ## 17. 第一阶段实施清单
 
 1. 为 CLI Main、Root Config 和 SQLite Open 建立 cold-start benchmark。
